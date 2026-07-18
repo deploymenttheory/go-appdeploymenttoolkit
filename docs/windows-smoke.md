@@ -36,6 +36,26 @@ phase.
 - [ ] MSI: `StartADTMsiProcess` install/uninstall/repair; `GetADTApplication` and
       `UninstallADTApplication` against real uninstall entries.
 
+## Phase 5 — Long tail
+
+- [ ] Fonts: `AddADTFont`/`RemoveADTFont` register in `%WINDIR%\Fonts` and take effect after `WM_FONTCHANGE`.
+- [ ] `AddADTEdgeExtension`/`RemoveADTEdgeExtension` update the Edge `ExtensionSettings` policy JSON.
+- [ ] `SetADTActiveSetup` writes the component key and executes the StubPath.
+- [ ] `RegisterADTDll`/`UnregisterADTDll` via architecture-correct regsvr32.
+- [ ] `Enable/DisableADTTerminalServerInstallMode` via `change user`.
+- [ ] `UpdateADTGroupPolicy` runs gpupdate for computer and user.
+- [ ] `MountADTWimFile`/`DismountADTWimFile` via dism.exe.
+- [ ] `GetADTExecutableInfo` reads a signed binary's version resource.
+- [ ] System-state probes: battery, network, PowerPoint slideshow, microphone,
+      OOBE, ESP, pending-reboot aggregation, toast mode.
+- [ ] `InstallADTMSUpdates` installs .msu packages; `TestADTMSUpdates` detects a
+      KB via the CBS registry.
+- [ ] **KNOWN GAP** — `InvokeADTSCCMTask` / `InstallADTSCCMSoftwareUpdates` return
+      `ErrNotImplemented`: the SMS_Client.TriggerSchedule WMI call needs a WMI
+      runtime, and `go-bindings-wmi@main` is currently incompatible with the
+      pinned `go-bindings-win32`. The schedule-ID→GUID logic is complete and
+      tested; only the final WMI invocation is pending a compatible binding.
+
 ## Phase 3 — UI + client-server
 
 - [ ] WebView2 dialogs render (welcome/close-apps, progress, restart, prompt);
