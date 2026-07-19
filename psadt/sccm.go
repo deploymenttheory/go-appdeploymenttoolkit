@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/configmgr"
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/regkey"
 )
 
 // InvokeADTSCCMTask is the Go port of Invoke-ADTSCCMTask: it triggers a
@@ -42,41 +41,21 @@ func InstallADTSCCMSoftwareUpdates(ctx context.Context) error {
 }
 
 // TestADTMSUpdates is the Go port of Test-ADTMSUpdates: it reports whether the
-// given Windows update (KB number, e.g. "KB2549864") is installed.
-//
-// Deviation from PSADT: PSADT queries Win32_QuickFixEngineering (Get-Hotfix)
-// with a Windows Update Agent COM fallback. To avoid a WMI dependency this
-// port scans the Component Based Servicing package list in the registry,
-// which lists a superset of the servicing-installed KBs.
+// given Windows update (KB number, e.g. "KB2549864") is installed, querying
+// Win32_QuickFixEngineering — the Get-Hotfix source PSADT uses.
 func TestADTMSUpdates(ctx context.Context, kbNumber string) (bool, error) {
 	if err := ctx.Err(); err != nil {
 		return false, fmt.Errorf("psadt: %w", err)
 	}
-	return hotfixInstalled(registryBackend(), kbNumber)
-}
-
-const cbsPackagesKey = `SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\Packages`
-
-// hotfixInstalled reports whether any CBS package name references the KB. It
-// takes a registry backend so the matching logic is testable with a fake.
-func hotfixInstalled(backend regkey.Backend, kbNumber string) (bool, error) {
 	kb := normalizeKB(kbNumber)
 	if kb == "" {
 		return false, nil
 	}
-	packages, err := backend.EnumSubkeys("HKLM", cbsPackagesKey)
-	if err != nil {
-		return false, fmt.Errorf("psadt: enumerating servicing packages: %w", err)
-	}
-	for _, pkg := range packages {
-		if strings.Contains(strings.ToUpper(pkg), kb) {
-			return true, nil
-		}
-	}
-	return false, nil
+	return configmgr.IsHotfixInstalled(ctx, kb)
 }
 
-// normalizeKB upper-cases and ensures the "KB" prefix on a KB identifier.
+// normalizeKB upper-cases and ensures the "KB" prefix on a KB identifier
+// (Win32_QuickFixEngineering's HotFixID is stored as "KB…").
 func normalizeKB(kb string) string {
 	kb = strings.ToUpper(strings.TrimSpace(kb))
 	if kb == "" {

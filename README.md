@@ -119,13 +119,15 @@ All five porting phases are complete: core session engine, system domains
 (registry, filesystem, INI, process, MSI, services, shortcuts, users), UI and
 cross-session client-server, CLI runner, and the long tail. See
 [`docs/windows-smoke.md`](docs/windows-smoke.md) for the manual Windows
-verification checklist and the one known gap (the SCCM `TriggerSchedule` WMI
-call, pending a compatible WMI binding).
+verification checklist (the syscall layers are cross-compiled and linted here
+but only execute on Windows).
 
 ## Supporting libraries
 
 - [`go-bindings-win32`](https://github.com/deploymenttheory/go-bindings-win32) —
   generated Win32 API bindings (MSI, WTS, registry, shell, tasks, …).
+- [`go-bindings-wmi`](https://github.com/deploymenttheory/go-bindings-wmi) —
+  typed WMI runtime (ConfigMgr `TriggerSchedule`, `Win32_QuickFixEngineering`).
 
 ## License
 

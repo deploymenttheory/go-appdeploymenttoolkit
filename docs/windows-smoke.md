@@ -49,12 +49,10 @@ phase.
 - [ ] System-state probes: battery, network, PowerPoint slideshow, microphone,
       OOBE, ESP, pending-reboot aggregation, toast mode.
 - [ ] `InstallADTMSUpdates` installs .msu packages; `TestADTMSUpdates` detects a
-      KB via the CBS registry.
-- [ ] **KNOWN GAP** — `InvokeADTSCCMTask` / `InstallADTSCCMSoftwareUpdates` return
-      `ErrNotImplemented`: the SMS_Client.TriggerSchedule WMI call needs a WMI
-      runtime, and `go-bindings-wmi@main` is currently incompatible with the
-      pinned `go-bindings-win32`. The schedule-ID→GUID logic is complete and
-      tested; only the final WMI invocation is pending a compatible binding.
+      KB via `Win32_QuickFixEngineering`.
+- [ ] `InvokeADTSCCMTask` / `InstallADTSCCMSoftwareUpdates` trigger the
+      `ROOT\CCM SMS_Client.TriggerSchedule` WMI method (requires the ConfigMgr
+      client). Verify the schedule fires in the ConfigMgr control panel.
 
 ## Phase 3 — UI + client-server
 
