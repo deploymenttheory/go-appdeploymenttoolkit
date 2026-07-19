@@ -1,0 +1,163 @@
+{
+  "CloseAppsPrompt": {
+    "CustomMessage": null,
+    "Fluent": {
+      "Subtitle": {
+        "Uninstall": "{Toolkit\\CompanyName} - アプリケーションのアンインストール",
+        "Install": "{Toolkit\\CompanyName} - アプリのインストール",
+        "Repair": "{Toolkit\\CompanyName} - アプリケーションの修復"
+      },
+      "ButtonLeftNoProcessesText": {
+        "Uninstall": "アンインストール",
+        "Install": "インストールする",
+        "Repair": "修理"
+      },
+      "ButtonLeftText": {
+        "Uninstall": "アプリを終了してアンインストールします。",
+        "Install": "アプリを終了してインストールします。",
+        "Repair": "アプリを終了して修理"
+      },
+      "ButtonRightText": "延期",
+      "DeferralsRemaining": "残りの延期",
+      "DialogMessage": {
+        "Uninstall": "次のアプリケーションが自動的に閉じられるので、作業を保存してから続行してください。",
+        "Install": "次のアプリケーションが自動的に閉じられるので、作業を保存してから続行してください。",
+        "Repair": "次のアプリケーションが自動的に閉じられるので、作業を保存してから続行してください。"
+      },
+      "AutomaticStartCountdown": "自動スタートカウントダウン",
+      "DeferralDeadline": "延期期限",
+      "DialogMessageNoProcesses": {
+        "Uninstall": "アンインストールを続行するには、[アンインストール] を選択してください。",
+        "Install": "インストールを選択してインストールを続行してください。",
+        "Repair": "修復を続行するには、[修復] を選択してください。"
+      }
+    },
+    "Classic": {
+      "ExpiryMessage": {
+        "Uninstall": "延期期間が切れるまでアンインストールを延期する選択肢もあります。",
+        "Install": "延期期間が終了するまでインストールを延期することができます。",
+        "Repair": "延期期間が切れるまで修理を延期することもできます。"
+      },
+      "ButtonDefer": "&延期",
+      "WelcomeMessage": {
+        "Uninstall": "次のアプリケーションがアンインストールされようとしています。",
+        "Install": "次のアプリケーションがインストールされようとしています。",
+        "Repair": "以下のアプリケーションを修理中です。"
+      },
+      "CountdownClose": {
+        "Uninstall": "注意: プログラムは、次の時間で自動的に閉じられます:",
+        "Install": "注意: プログラムは、次の時間で自動的に閉じられます:",
+        "Repair": "注意: プログラムは、次の時間で自動的に閉じられます:"
+      },
+      "DeferralsRemaining": "繰り延べ残高：",
+      "CountdownDefer": {
+        "Uninstall": "アンインストールは自動的に続行されます。",
+        "Install": "インストールは自動的に続行されます。",
+        "Repair": "修復は自動的に続行されます。"
+      },
+      "CloseAppsMessage": {
+        "Uninstall": "アンインストールを続行するには、次のプログラムを閉じてください。\n\n作業内容を保存し、プログラムを閉じてから続行してください。または、作業内容を保存し、[プログラムの終了] をクリックしてください。",
+        "Install": "インストールを続行するには、次のプログラムを閉じなければなりません。\n\n作業内容を保存し、プログラムを閉じてから続行してください。または、作業内容を保存し、[プログラムの終了] をクリックしてください。",
+        "Repair": "修復を続行するには、次のプログラムを閉じなければなりません。\n\n作業内容を保存し、プログラムを閉じてから続行してください。または、作業内容を保存し、[プログラムの終了] をクリックしてください。"
+      },
+      "ButtonContinueTooltip": "上記にリストされたアプリケーションをすべて閉じた後にのみ、「続行」を選択してください。",
+      "DeferralDeadline": "期限:",
+      "ButtonClose": "閉じる &Programs",
+      "ExpiryWarning": "猶予期間が終了すると、猶予のオプションはなくなります。",
+      "ButtonContinue": "&続行"
+    }
+  },
+  "RestartPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - アプリケーションのアンインストール",
+      "Install": "{Toolkit\\CompanyName} - アプリケーションのインストール",
+      "Repair": "{Toolkit\\CompanyName} - アプリケーションの修復"
+    },
+    "MessageRestart": "カウントダウンの終了時にコンピュータが自動的に再起動されます。",
+    "MessageTime": "作業内容を保存し、指定時間内に再起動してください。",
+    "Message": {
+      "Uninstall": "アンインストールを完了するには、コンピュータを再起動する必要があります。",
+      "Install": "インストールを完了するには、コンピュータを再起動する必要があります。",
+      "Repair": "修復を完了するには、コンピュータを再起動する必要があります。"
+    },
+    "ButtonCancel": "キャンセル",
+    "CustomMessage": null,
+    "ButtonRestartNow": "今すぐ再起動",
+    "ButtonRestartLater": "最小化",
+    "Title": "再起動が必要です",
+    "TimeRemaining": "残り時間:"
+  },
+  "DiskSpaceText": {
+    "Message": {
+      "Uninstall": "アンインストールを完了するにはディスク容量が不足しています。:\n{0}\n\n必要な容量: {1}MB\n使用可能な容量: {2}MB\n\nアンインストールを実行するには、十分なディスク容量を確保してください。",
+      "Install": "インストールを完了するには十分なディスク領域がありません。:\n{0}\n\n必要なディスク領域: {1}MB\n使用可能なディスク領域: {2}MB\n\nインストールを続行するには、十分なディスク領域を確保してください。",
+      "Repair": "修復を完了するには十分なディスク領域がありません。\n{0}\n\n必要な容量: {1}MB\n使用可能な容量: {2}MB\n\n修復を実行するには、十分なディスク領域を確保してください。"
+    }
+  },
+  "ProgressPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - アプリケーションのアンインストール",
+      "Install": "{Toolkit\\CompanyName} - アプリケーションのインストール",
+      "Repair": "{Toolkit\\CompanyName} - アプリケーションの修復"
+    },
+    "MessageDetail": {
+      "Uninstall": "アンインストールが完了すると、このウィンドウは自動的に閉じられます。",
+      "Install": "インストールが完了すると、このウィンドウは自動的に閉じられます。",
+      "Repair": "修復が完了すると、このウィンドウは自動的に閉じられます。"
+    },
+    "Message": {
+      "Uninstall": "アンインストール中です。しばらくお待ちください…",
+      "Install": "インストール中です。しばらくお待ちください…",
+      "Repair": "修復中です。しばらくお待ちください…"
+    }
+  },
+  "BlockExecutionText": {
+    "Message": {
+      "Uninstall": "アンインストール操作を完了させるため、このアプリケーションの起動が一時的にブロックされました。",
+      "Install": "インストール操作を完了させるため、このアプリケーションの起動が一時的にブロックされました。",
+      "Repair": "修復操作を完了させるため、このアプリケーションの起動が一時的にブロックされました。"
+    },
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - アプリケーションのアンインストール",
+      "Install": "{Toolkit\\CompanyName} - アプリケーションのインストール",
+      "Repair": "{Toolkit\\CompanyName} - アプリケーションの修復"
+    }
+  },
+  "InstallationPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - アプリケーションのアンインストール",
+      "Install": "{Toolkit\\CompanyName} - アプリケーションのインストール",
+      "Repair": "{Toolkit\\CompanyName} - アプリケーションの修復"
+    }
+  },
+  "BalloonTip": {
+    "Error": {
+      "Uninstall": "アンインストールに失敗しました。",
+      "Install": "インストールに失敗しました。",
+      "Repair": "修復に失敗しました。"
+    },
+    "Start": {
+      "Uninstall": "アンインストールが開始されました。",
+      "Install": "インストールが開始されました。",
+      "Repair": "修復が開始されました。"
+    },
+    "RestartRequired": {
+      "Uninstall": "アンインストールが完了しました。再起動が必要です。",
+      "Install": "インストールが完了しました。再起動が必要です。",
+      "Repair": "修復が完了しました。再起動が必要です。"
+    },
+    "Complete": {
+      "Uninstall": "アンインストールが完了しました。",
+      "Install": "インストールが完了しました。",
+      "Repair": "修復が完了しました。"
+    },
+    "FastRetry": {
+      "Uninstall": "アンインストールが完了していません。",
+      "Install": "インストールが完了していません。",
+      "Repair": "修復が完了していません。"
+    }
+  },
+  "ListSelectionPrompt": {
+    "ListSelectionMessage": "項目を選択してください:"
+  }
+}

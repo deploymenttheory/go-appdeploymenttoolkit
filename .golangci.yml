@@ -95,6 +95,19 @@ linters:
           - dupl
           - gosec
 
+      # PSADT parity: config structs deliberately mirror PSADT's PascalCase
+      # psd1 key names in their yaml tags so PowerShell config files
+      # translate line-for-line.
+      - linters:
+          - tagliatelle
+        path: (internal/config|internal/strtab|psadt)/
+
+      # wrapcheck treats this module's own internal/* packages as external;
+      # toolkit errors are wrapped at their origin (internal/winerr).
+      - linters:
+          - wrapcheck
+        path: (internal|psadt|cmd|examples)/
+
       # only run “forbidigo” on tests (silence everywhere else)
       - path-except: _test\.go
         linters:

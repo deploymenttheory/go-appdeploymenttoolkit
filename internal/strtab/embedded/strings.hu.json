@@ -1,0 +1,163 @@
+{
+  "CloseAppsPrompt": {
+    "CustomMessage": null,
+    "Fluent": {
+      "Subtitle": {
+        "Uninstall": "{Toolkit\\CompanyName} - Alkalmazás Eltávolítása",
+        "Install": "{Toolkit\\CompanyName} - Alkalmazás Telepítése",
+        "Repair": "{Toolkit\\CompanyName} - Alkalmazás Javítása"
+      },
+      "ButtonLeftNoProcessesText": {
+        "Uninstall": "Eltávolítás",
+        "Install": "Telepítés",
+        "Repair": "Javítás"
+      },
+      "ButtonLeftText": {
+        "Uninstall": "Alkalmazások Bezárása és Eltávolítása",
+        "Install": "Alkalmazások Bezárása és Telepítése",
+        "Repair": "Alkalmazások Bezárása és Javítása"
+      },
+      "ButtonRightText": "Halasztás",
+      "DeferralsRemaining": "Fennmaradó halasztások",
+      "DialogMessage": {
+        "Uninstall": "Kérjük, mentse el munkáját, mielőtt folytatná, mivel a következő alkalmazások automatikusan bezárásra kerülnek.",
+        "Install": "Kérjük, mentse el munkáját, mielőtt folytatná, mivel a következő alkalmazások automatikusan bezárásra kerülnek.",
+        "Repair": "Kérjük, mentse el munkáját, mielőtt folytatná, mivel a következő alkalmazások automatikusan bezárásra kerülnek."
+      },
+      "AutomaticStartCountdown": "Automatikus indítási visszaszámlálás",
+      "DeferralDeadline": "Halasztási határidő",
+      "DialogMessageNoProcesses": {
+        "Uninstall": "Kérjük, válassza az Eltávolítás lehetőséget az eltávolítás folytatásához.",
+        "Install": "A telepítés folytatásához válassza a Telepítés lehetőséget.",
+        "Repair": "A javítás folytatásához válassza a Repair (Javítás) lehetőséget."
+      }
+    },
+    "Classic": {
+      "ExpiryMessage": {
+        "Uninstall": "Az eltávolítást elhalaszthatja a halasztás lejártáig:",
+        "Install": "A telepítést a halasztás lejártáig elhalaszthatja:",
+        "Repair": "A javítást a halasztás lejártáig elhalaszthatja:"
+      },
+      "ButtonDefer": "&Elhalasztás",
+      "WelcomeMessage": {
+        "Uninstall": "A következő alkalmazás eltávolítása folyamatban van:",
+        "Install": "A következő alkalmazás telepítése folyamatban van:",
+        "Repair": "A következő alkalmazás javításra kerül:"
+      },
+      "CountdownClose": {
+        "Uninstall": "MEGJEGYZÉS: A program(ok) automatikusan bezárul(nak):",
+        "Install": "MEGJEGYZÉS: A program(ok) automatikusan bezárul(nak):",
+        "Repair": "MEGJEGYZÉS: A program(ok) automatikusan bezárul(nak):"
+      },
+      "DeferralsRemaining": "Maradék halasztások:",
+      "CountdownDefer": {
+        "Uninstall": "Az eltávolítás automatikusan folytatódik:",
+        "Install": "A telepítés automatikusan folytatódik:",
+        "Repair": "A javítás automatikusan folytatódik:"
+      },
+      "CloseAppsMessage": {
+        "Uninstall": "Az alábbi programokat be kell zárni, mielőtt az eltávolítás folytatódhat.\n\nKérjük, mentse el munkáját, zárja be a programokat, majd folytassa. Másik lehetőségként mentse el a munkáját, és kattintson a „Programok bezárása” gombra.",
+        "Install": "A következő programokat be kell zárni, mielőtt a telepítés folytatódhat.\n\nKérjük, mentse el munkáját, zárja be a programokat, majd folytassa. Alternatív megoldásként mentse el a munkáját, és kattintson a „Programok bezárása” gombra.",
+        "Repair": "A következő programokat be kell zárni, mielőtt a javítás folytatódhat.\n\nKérjük, mentse el munkáját, zárja be a programokat, majd folytassa. Másik lehetőségként mentse el a munkáját, és kattintson a „Programok bezárása” gombra."
+      },
+      "ButtonContinueTooltip": "Csak a fent felsorolt alkalmazás(ok) bezárása után válassza a „Folytatás” lehetőséget.",
+      "DeferralDeadline": "Határidő:",
+      "ButtonClose": "Alkalmazások bezárása",
+      "ExpiryWarning": "Ha a halasztás lejár, többé nem lesz lehetősége a halasztásra.",
+      "ButtonContinue": "&Folytatás"
+    }
+  },
+  "RestartPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - Alkalmazás Eltávolítása",
+      "Install": "{Toolkit\\CompanyName} - Alkalmazás Telepítése",
+      "Repair": "{Toolkit\\CompanyName} - Alkalmazás Javítása"
+    },
+    "MessageRestart": "A visszaszámlálás végén a számítógép automatikusan újraindul.",
+    "MessageTime": "Kérjük, mentse el munkáját, és indítsa újra a megadott időn belül.",
+    "Message": {
+      "Uninstall": "Az eltávolítás befejezéséhez újra kell indítania a számítógépet.",
+      "Install": "A telepítés befejezéséhez újra kell indítania a számítógépet.",
+      "Repair": "A javítás befejezéséhez újra kell indítania a számítógépet."
+    },
+    "ButtonCancel": "Mégse",
+    "CustomMessage": null,
+    "ButtonRestartNow": "Újraindítás most",
+    "ButtonRestartLater": "Minimalizálás",
+    "Title": "Újraindítás szükséges",
+    "TimeRemaining": "A hátralévő idő:"
+  },
+  "DiskSpaceText": {
+    "Message": {
+      "Uninstall": "Nincs elég lemezterület a következő eltávolításának befejezéséhez:\n{0}\n\nSzükséges hely: {1}MB\n: {2}MB\n\nKérem, szabadítson fel elegendő lemezterületet az eltávolítás folytatásához.",
+      "Install": "Nincs elég lemezterület a telepítés befejezéséhez:\n{0}\n\nSzükséges hely: {1}MB\n: {2}MB\n\nKérjük, szabadítson fel elegendő lemezterületet a telepítés folytatásához.",
+      "Repair": "Nincs elég lemezterület a javítás befejezéséhez:\n{0}\n\nSzükséges hely: {1}MB\n: {2}MB\n\nKérem, szabadítson fel elegendő lemezterületet a javítás folytatásához."
+    }
+  },
+  "ProgressPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - Alkalmazás Eltávolítása",
+      "Install": "{Toolkit\\CompanyName} - Alkalmazás Telepítése",
+      "Repair": "{Toolkit\\CompanyName} - Alkalmazás Javítása"
+    },
+    "MessageDetail": {
+      "Uninstall": "Ez az ablak automatikusan bezáródik, amikor az eltávolítás befejeződött.",
+      "Install": "Ez az ablak automatikusan bezáródik, ha a telepítés befejeződött.",
+      "Repair": "Ez az ablak automatikusan bezáródik, ha a javítás befejeződött."
+    },
+    "Message": {
+      "Uninstall": "Eltávolítás folyamatban. Kérjük várjon…",
+      "Install": "Telepítés folyamatban. Kérjük várjon…",
+      "Repair": "Javítás folyamatban. Kérjük várjon…"
+    }
+  },
+  "BlockExecutionText": {
+    "Message": {
+      "Uninstall": "Az alkalmazás indítása ideiglenesen blokkolva van, hogy egy eltávolítási művelet befejeződhessen.",
+      "Install": "Az alkalmazás indítása ideiglenesen blokkolva van, hogy egy telepítési művelet befejeződhessen.",
+      "Repair": "Az alkalmazás indítása ideiglenesen blokkolva van, hogy egy javítási művelet befejeződhessen."
+    },
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - Alkalmazás Eltávolítása",
+      "Install": "{Toolkit\\CompanyName} - Alkalmazás Telepítése",
+      "Repair": "{Toolkit\\CompanyName} - Alkalmazás Javítása"
+    }
+  },
+  "InstallationPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - Alkalmazás Eltávolítása",
+      "Install": "{Toolkit\\CompanyName} - Alkalmazás Telepítése",
+      "Repair": "{Toolkit\\CompanyName} - Alkalmazás Javítása"
+    }
+  },
+  "BalloonTip": {
+    "Error": {
+      "Uninstall": "Az eltávolítás sikertelen.",
+      "Install": "Telepítés sikertelen.",
+      "Repair": "A javítás sikertelen."
+    },
+    "Start": {
+      "Uninstall": "Az eltávolítás megkezdődött.",
+      "Install": "A telepítés megkezdődött.",
+      "Repair": "A javítás megkezdődött."
+    },
+    "RestartRequired": {
+      "Uninstall": "Az eltávolítás befejeződött. Újraindítás szükséges.",
+      "Install": "Telepítés befejeződött. Újraindítás szükséges.",
+      "Repair": "Javítás befejeződött. Újraindítás szükséges."
+    },
+    "Complete": {
+      "Uninstall": "Az eltávolítás befejeződött.",
+      "Install": "A telepítés befejeződött.",
+      "Repair": "Javítás befejeződött."
+    },
+    "FastRetry": {
+      "Uninstall": "Az eltávolítás nem fejeződött be.",
+      "Install": "Telepítés nem fejeződött be.",
+      "Repair": "Javítás nem fejeződött be."
+    }
+  },
+  "ListSelectionPrompt": {
+    "ListSelectionMessage": "Válasszon egy elemet:"
+  }
+}

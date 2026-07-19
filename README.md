@@ -1,75 +1,132 @@
-# Template
+# go-appdeploymenttoolkit
 
-This repository serves as a **Default Template Repository** according official [GitHub Contributing Guidelines][ProjectSetup] for healthy contributions. It brings you clean default Templates for several areas:
+A Go port of [PSAppDeployToolkit](https://psappdeploytoolkit.com) (PSADT) v4 — a
+toolkit for building Windows application deployments. It provides deployment
+session management, CMTrace logging, localized user dialogs, deferral logic,
+MSI helpers and a broad set of Windows system utilities, as an importable Go
+SDK plus a CLI runner.
 
-- [Azure DevOps Pull Requests](.azuredevops/PULL_REQUEST_TEMPLATE.md) ([`.azuredevops\PULL_REQUEST_TEMPLATE.md`](`.azuredevops\PULL_REQUEST_TEMPLATE.md`))
-- [Azure Pipelines](.pipelines/pipeline.yml) ([`.pipelines/pipeline.yml`](`.pipelines/pipeline.yml`))
-- [GitHub Workflows](.github/workflows/)
-  - [Super Linter](.github/workflows/linter.yml) ([`.github/workflows/linter.yml`](`.github/workflows/linter.yml`))
-  - [Sample Workflows](.github/workflows/workflow.yml) ([`.github/workflows/workflow.yml`](`.github/workflows/workflow.yml`))
-- [GitHub Pull Requests](.github/PULL_REQUEST_TEMPLATE.md) ([`.github/PULL_REQUEST_TEMPLATE.md`](`.github/PULL_REQUEST_TEMPLATE.md`))
-- [GitHub Issues](.github/ISSUE_TEMPLATE/)
-  - [Feature Requests](.github/ISSUE_TEMPLATE/FEATURE_REQUEST.md) ([`.github/ISSUE_TEMPLATE/FEATURE_REQUEST.md`](`.github/ISSUE_TEMPLATE/FEATURE_REQUEST.md`))
-  - [Bug Reports](.github/ISSUE_TEMPLATE/BUG_REPORT.md) ([`.github/ISSUE_TEMPLATE/BUG_REPORT.md`](`.github/ISSUE_TEMPLATE/BUG_REPORT.md`))
-- [Codeowners](.github/CODEOWNERS) ([`.github/CODEOWNERS`](`.github/CODEOWNERS`)) _adjust usernames once cloned_
-- [Wiki and Documentation](docs/) ([`docs/`](`docs/`))
-- [gitignore](.gitignore) ([`.gitignore`](.gitignore))
-- [gitattributes](.gitattributes) ([`.gitattributes`](.gitattributes))
-- [Changelog](CHANGELOG.md) ([`CHANGELOG.md`](`CHANGELOG.md`))
-- [Code of Conduct](CODE_OF_CONDUCT.md) ([`CODE_OF_CONDUCT.md`](`CODE_OF_CONDUCT.md`))
-- [Contribution](CONTRIBUTING.md) ([`CONTRIBUTING.md`](`CONTRIBUTING.md`))
-- [License](LICENSE) ([`LICENSE`](`LICENSE`)) _adjust projectname once cloned_
-- [Readme](README.md) ([`README.md`](`README.md`))
-- [Security](SECURITY.md) ([`SECURITY.md`](`SECURITY.md`))
+> **Windows-only at runtime.** The toolkit targets `GOOS=windows`
+> (amd64/arm64). It cross-compiles and unit-tests its portable logic on any
+> platform; the syscall layers only execute on Windows.
 
+## Function parity
+
+Every exported function is a 1:1 port of the PSADT PowerShell function of the
+same name with the hyphens removed, so existing deployment scripts translate
+mechanically:
+
+| PowerShell (PSADT) | Go (`psadt`) |
+| --- | --- |
+| `Open-ADTSession` | `psadt.OpenADTSession` |
+| `Start-ADTMsiProcess` | `psadt.StartADTMsiProcess` |
+| `Show-ADTInstallationWelcome` | `psadt.ShowADTInstallationWelcome` |
+| `Copy-ADTFile` | `psadt.CopyADTFile` |
+| `Set-ADTRegistryKey` | `psadt.SetADTRegistryKey` |
+
+PowerShell-runtime plumbing (`Initialize-ADTFunction`, `New-ADTErrorRecord`, …)
+has no Go counterpart; the `*-ADTModuleCallback` family is replaced by
+`SessionHooks`, and `New-ADTTemplate` is provided by `adt new`.
+
+## Authoring a deployment
+
+A deployment is a small Go program describing its phases — the analogue of
+PSADT's `Invoke-AppDeployToolkit.ps1`:
+
+```go
+package main
+
+import (
+    "context"
+
+    "github.com/deploymenttheory/go-appdeploymenttoolkit/psadt"
+)
+
+func main() {
+    (&psadt.Deployment{
+        Session: psadt.SessionOptions{
+            AppVendor:  "VideoLAN",
+            AppName:    "VLC media player",
+            AppVersion: "3.0.23",
+            AppProcessesToClose: []psadt.ProcessObject{{Name: "vlc", Description: "VLC media player"}},
+        },
+        PreInstall: func(ctx context.Context, s *psadt.DeploymentSession) error {
+            _, err := psadt.ShowADTInstallationWelcome(ctx, psadt.ShowADTInstallationWelcomeOptions{
+                CloseProcesses: s.Options().AppProcessesToClose, AllowDefer: true, DeferTimes: 3,
+            })
+            return err
+        },
+        Install: func(ctx context.Context, s *psadt.DeploymentSession) error {
+            _, err := psadt.StartADTMsiProcess(ctx, psadt.StartADTMsiProcessOptions{
+                Action: "Install", Path: "vlc.msi",
+            })
+            return err
+        },
+    }).Run(context.Background())
+}
+```
+
+Build it for Windows and run it with the standard PSADT frontend flags:
+
+```sh
+GOOS=windows go build -o Invoke-AppDeployToolkit.exe
+Invoke-AppDeployToolkit.exe -DeploymentType Install -DeployMode Interactive
+```
+
+## CLI
+
+The `adt` command is the analogue of `Invoke-AppDeployToolkit.exe`:
+
+- `adt run <package-dir>` — run a deployment package. When `Files/` holds a
+  single MSI, it drives the **zero-config** install/uninstall/repair flow with
+  no author code.
+- `adt new <dir> --name MyApp` — scaffold a package (`Files/`, `SupportFiles/`,
+  `Config/`, `Strings/`, `Assets/`, a `go.mod` and a deployment `main.go`).
+
+```sh
+go install github.com/deploymenttheory/go-appdeploymenttoolkit/cmd/adt@latest
+adt run ./MyPackage --deployment-type Install --deploy-mode Silent
+```
+
+## Configuration & localization
+
+- Package config lives in `Config/config.yaml`, mirroring PSADT's
+  `config.psd1` section structure (Assets, MSI, Toolkit, UI); embedded defaults
+  are used when it is absent.
+- String tables ship for all 26 PSADT cultures plus English; override via
+  `Strings/strings.yaml`.
+
+## UI
+
+Interactive dialogs render through Microsoft Edge WebView2 (via the CGo-free
+`jchv/go-webview2`), with a native `MessageBox`/`TaskDialog` fallback when the
+WebView2 runtime is absent. Deployments running as SYSTEM show dialogs in the
+interactive user session via a same-binary client re-exec over anonymous pipes.
+
+## Package layout
+
+```
+psadt/        public SDK — all ~169 ported functions (one file per category)
+internal/     domain implementations behind portable seams
+cmd/adt/      CLI runner (run / new / client)
+examples/     runnable deployment programs
+tools/        the psd1→YAML converter for config and string tables
+```
 
 ## Status
 
-[![Super Linter](<https://github.com/segraef/Template/actions/workflows/linter.yml/badge.svg>)](<https://github.com/segraef/Template/actions/workflows/linter.yml>)
+All five porting phases are complete: core session engine, system domains
+(registry, filesystem, INI, process, MSI, services, shortcuts, users), UI and
+cross-session client-server, CLI runner, and the long tail. See
+[`docs/windows-smoke.md`](docs/windows-smoke.md) for the manual Windows
+verification checklist and the one known gap (the SCCM `TriggerSchedule` WMI
+call, pending a compatible WMI binding).
 
-[![Sample Workflow](<https://github.com/segraef/Template/actions/workflows/workflow.yml/badge.svg>)](<https://github.com/segraef/Template/actions/workflows/workflow.yml>)
+## Supporting libraries
 
-## Creating a repository from a template
+- [`go-bindings-win32`](https://github.com/deploymenttheory/go-bindings-win32) —
+  generated Win32 API bindings (MSI, WTS, registry, shell, tasks, …).
 
-You can [generate](https://github.com/segraef/Template/generate) a new repository with the same directory structure and files as an existing repository. More details can be found [here][CreateFromTemplate].
+## License
 
-## Reporting Issues and Feedback
-
-### Issues and Bugs
-
-If you find any bugs, please file an issue in the [GitHub Issues][GitHubIssues] page. Please fill out the provided template with the appropriate information.
-
-If you are taking the time to mention a problem, even a seemingly minor one, it is greatly appreciated, and a totally valid contribution to this project. **Thank you!**
-
-## Feedback
-
-If there is a feature you would like to see in here, please file an issue or feature request in the [GitHub Issues][GitHubIssues] page to provide direct feedback.
-
-## Contribution
-
-If you would like to become an active contributor to this repository or project, please follow the instructions provided in [`CONTRIBUTING.md`][Contributing].
-
-## Learn More
-
-* [GitHub Documentation][GitHubDocs]
-* [Azure DevOps Documentation][AzureDevOpsDocs]
-* [Microsoft Azure Documentation][MicrosoftAzureDocs]
-
-<!-- References -->
-
-<!-- Local -->
-[ProjectSetup]: <https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions>
-[CreateFromTemplate]: <https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/creating-a-repository-on-github/creating-a-repository-from-a-template>
-[GitHubDocs]: <https://docs.github.com/>
-[AzureDevOpsDocs]: <https://docs.microsoft.com/en-us/azure/devops/?view=azure-devops>
-[GitHubIssues]: <https://github.com/segraef/Template/issues>
-[Contributing]: CONTRIBUTING.md
-
-<!-- External -->
-[Az]: <https://img.shields.io/powershellgallery/v/Az.svg?style=flat-square&label=Az>
-[AzGallery]: <https://www.powershellgallery.com/packages/Az/>
-[PowerShellCore]: <https://github.com/PowerShell/PowerShell/releases/latest>
-
-<!-- Docs -->
-[MicrosoftAzureDocs]: <https://docs.microsoft.com/en-us/azure/>
-[PowerShellDocs]: <https://docs.microsoft.com/en-us/powershell/>
+See [LICENSE](LICENSE).

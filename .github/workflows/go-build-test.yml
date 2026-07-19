@@ -1,0 +1,61 @@
+name: go | Build & Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - '.github/workflows/go-build-test.yml'
+      - 'go.mod'
+      - 'go.sum'
+      - '**/*.go'
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: '🔨 Cross-compile & test'
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+        with:
+          egress-policy: audit
+
+      - name: Check Out
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # go.mod uses a relative `replace` for go-bindings-win32 while it tracks
+      # that library's unreleased API. Check it out as a sibling so the module
+      # resolves. Drop this step once a matching go-bindings-win32 tag is
+      # published and the replace is removed.
+      - name: Check Out go-bindings-win32 (sibling replace target)
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: deploymenttheory/go-bindings-win32
+          path: ../go-bindings-win32
+
+      - name: Set up Go
+        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+        with:
+          go-version-file: go.mod
+
+      # The toolkit is Windows-only at runtime; verify it cross-compiles for
+      # every supported architecture.
+      - name: Cross-compile (windows/amd64)
+        run: GOOS=windows GOARCH=amd64 go build ./...
+
+      - name: Cross-compile (windows/arm64)
+        run: GOOS=windows GOARCH=arm64 go build ./...
+
+      # Portable packages (config, strtab, logging, deferral, ini, session,
+      # and the pure-logic helpers) are unit-tested on the Linux runner.
+      - name: Test portable packages
+        run: go test -race ./...
+
+      - name: Vet
+        run: |
+          go vet ./...
+          GOOS=windows go vet ./...

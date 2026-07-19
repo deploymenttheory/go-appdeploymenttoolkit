@@ -1,0 +1,163 @@
+{
+  "CloseAppsPrompt": {
+    "CustomMessage": null,
+    "Fluent": {
+      "Subtitle": {
+        "Uninstall": "{Toolkit\\CompanyName} - Dezinstalacja Aplikacji",
+        "Install": "{Toolkit\\CompanyName} - Instalacja Aplikacji",
+        "Repair": "{Toolkit\\CompanyName} - Naprawa Aplikacji"
+      },
+      "ButtonLeftNoProcessesText": {
+        "Uninstall": "Odinstaluj",
+        "Install": "Zainstaluj",
+        "Repair": "Napraw"
+      },
+      "ButtonLeftText": {
+        "Uninstall": "Zamknij aplikacje i odinstaluj",
+        "Install": "Zamknij aplikacje i zainstaluj",
+        "Repair": "Zamknij aplikacje i napraw"
+      },
+      "ButtonRightText": "Odroczyć",
+      "DeferralsRemaining": "Pozostałe odroczenia",
+      "DialogMessage": {
+        "Uninstall": "Proszę zapisać pracę przed kontynuowaniem, ponieważ następujące aplikacje zostaną automatycznie zamknięte.",
+        "Install": "Proszę zapisać pracę przed kontynuowaniem, ponieważ następujące aplikacje zostaną automatycznie zamknięte.",
+        "Repair": "Proszę zapisać pracę przed kontynuowaniem, ponieważ następujące aplikacje zostaną automatycznie zamknięte."
+      },
+      "AutomaticStartCountdown": "Automatyczne odliczanie do rozpoczęcia",
+      "DeferralDeadline": "Termin odroczenia",
+      "DialogMessageNoProcesses": {
+        "Uninstall": "Proszę wybrać Uninstall, aby kontynuować dezinstalację.",
+        "Install": "Proszę wybrać Install, aby kontynuować instalację.",
+        "Repair": "Proszę wybrać Repair, aby kontynuować naprawę."
+      }
+    },
+    "Classic": {
+      "ExpiryMessage": {
+        "Uninstall": "Mogą Państwo wybrać odroczenie deinstalacji do czasu wygaśnięcia odroczenia:",
+        "Install": "Mogą Państwo wybrać odroczenie instalacji do czasu wygaśnięcia odroczenia:",
+        "Repair": "Mogą Państwo wybrać opcję odroczenia naprawy do momentu wygaśnięcia odroczenia:"
+      },
+      "ButtonDefer": "&Odroczyć",
+      "WelcomeMessage": {
+        "Uninstall": "Następująca aplikacja ma zostać odinstalowana:",
+        "Install": "Następująca aplikacja zostanie wkrótce zainstalowana:",
+        "Repair": "Następująca aplikacja ma zostać naprawiona:"
+      },
+      "CountdownClose": {
+        "Uninstall": "UWAGA: Program(y) zostanie(ą) automatycznie zamknięty(e) w:",
+        "Install": "UWAGA: Program(y) zostanie(ą) automatycznie zamknięty(e) w:",
+        "Repair": "UWAGA: Program(y) zostanie(ą) automatycznie zamknięty(e) w:"
+      },
+      "DeferralsRemaining": "Pozostałe odroczenia:",
+      "CountdownDefer": {
+        "Uninstall": "Deinstalacja będzie automatycznie kontynuowana w:",
+        "Install": "Instalacja będzie automatycznie kontynuowana w:",
+        "Repair": "Naprawa będzie automatycznie kontynuowana w:"
+      },
+      "CloseAppsMessage": {
+        "Uninstall": "Następujące programy muszą zostać zamknięte przed przystąpieniem do dezinstalacji.\n\nProszę zapisać pracę, zamknąć programy, a następnie kontynuować. Alternatywnie, proszę zapisać pracę i kliknąć „Zamknij programy”.",
+        "Install": "Następujące programy muszą zostać zamknięte przed kontynuowaniem instalacji.\n\nProszę zapisać swoją pracę, zamknąć programy, a następnie kontynuować. Alternatywnie, proszę zapisać pracę i kliknąć „Zamknij programy”.",
+        "Repair": "Następujące programy muszą zostać zamknięte przed kontynuowaniem naprawy.\n\nProszę zapisać swoją pracę, zamknąć programy, a następnie kontynuować. Alternatywnie, proszę zapisać swoją pracę i kliknąć „Zamknij programy”."
+      },
+      "ButtonContinueTooltip": "Proszę wybrać »Kontynuuj« tylko po zamknięciu wyżej wymienionych aplikacji.",
+      "DeferralDeadline": "Termin:",
+      "ButtonClose": "Zamknij &Programy",
+      "ExpiryWarning": "Po wygaśnięciu odroczenia nie będzie już możliwości odroczenia.",
+      "ButtonContinue": "&Kontynuuj"
+    }
+  },
+  "RestartPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - Dezinstalacja Aplikacji",
+      "Install": "{Toolkit\\CompanyName} - Instalacja Aplikacji",
+      "Repair": "{Toolkit\\CompanyName} - Naprawa Aplikacji"
+    },
+    "MessageRestart": "Państwa komputer zostanie automatycznie uruchomiony ponownie po zakończeniu odliczania.",
+    "MessageTime": "Proszę zapisać swoją pracę i ponownie uruchomić komputer w wyznaczonym czasie.",
+    "Message": {
+      "Uninstall": "Aby zakończyć dezinstalację, należy ponownie uruchomić komputer.",
+      "Install": "Aby zakończyć instalację, należy ponownie uruchomić komputer.",
+      "Repair": "Aby zakończyć naprawę, należy ponownie uruchomić komputer."
+    },
+    "ButtonCancel": "Anuluj",
+    "CustomMessage": null,
+    "ButtonRestartNow": "Uruchom ponownie teraz",
+    "ButtonRestartLater": "Minimalizuj",
+    "Title": "Proszę uruchomić ponownie",
+    "TimeRemaining": "Pozostały czas:"
+  },
+  "DiskSpaceText": {
+    "Message": {
+      "Uninstall": "Nie ma wystarczającej ilości miejsca na dysku, aby ukończyć dezinstalację:\n{0}\n\nWymagane miejsce: {1}MB\nDostępne miejsce: {2}MB\n\nProszę zwolnić wystarczającą ilość miejsca na dysku, aby kontynuować dezinstalację.",
+      "Install": "Nie mają Państwo wystarczającej ilości miejsca na dysku, aby ukończyć instalację:\n{0}\n\nWymagane miejsce: {1}MB\nDostępne miejsce: {2}MB\n\nProszę zwolnić wystarczającą ilość miejsca na dysku, aby kontynuować instalację.",
+      "Repair": "Nie ma wystarczającej ilości miejsca na dysku, aby dokończyć naprawę:\n{0}\n\nWymagane miejsce: {1}MB\nDostępne miejsce: {2}MB\n\nProszę zwolnić wystarczającą ilość miejsca na dysku, aby kontynuować naprawę."
+    }
+  },
+  "ProgressPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - Dezinstalacja Aplikacji",
+      "Install": "{Toolkit\\CompanyName} - Instalacja Aplikacji",
+      "Repair": "{Toolkit\\CompanyName} - Naprawa Aplikacji"
+    },
+    "MessageDetail": {
+      "Uninstall": "To okno zostanie zamknięte automatycznie po zakończeniu dezinstalacji.",
+      "Install": "To okno zamknie się automatycznie po zakończeniu instalacji.",
+      "Repair": "To okno zostanie zamknięte automatycznie po zakończeniu naprawy."
+    },
+    "Message": {
+      "Uninstall": "Trwa dezinstalacja. Proszę czekać…",
+      "Install": "Instalacja w toku. Proszę czekać…",
+      "Repair": "Trwa naprawa. Proszę czekać…"
+    }
+  },
+  "BlockExecutionText": {
+    "Message": {
+      "Uninstall": "Uruchamianie tej aplikacji zostało tymczasowo zablokowane, aby można było zakończyć operację dezinstalacji.",
+      "Install": "Uruchamianie tej aplikacji zostało tymczasowo zablokowane, aby można było ukończyć operację instalacji.",
+      "Repair": "Uruchomienie tej aplikacji zostało tymczasowo zablokowane, aby umożliwić zakończenie operacji naprawy."
+    },
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - Dezinstalacja Aplikacji",
+      "Install": "{Toolkit\\CompanyName} - Instalacja Aplikacji",
+      "Repair": "{Toolkit\\CompanyName} - Naprawa Aplikacji"
+    }
+  },
+  "InstallationPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - Dezinstalacja Aplikacji",
+      "Install": "{Toolkit\\CompanyName} - Instalacja Aplikacji",
+      "Repair": "{Toolkit\\CompanyName} - Naprawa Aplikacji"
+    }
+  },
+  "BalloonTip": {
+    "Error": {
+      "Uninstall": "Dezinstalacja nie powiodła się.",
+      "Install": "Instalacja nie powiodła się.",
+      "Repair": "Naprawa nie powiodła się."
+    },
+    "Start": {
+      "Uninstall": "Rozpoczęto dezinstalację.",
+      "Install": "Rozpoczęto instalację.",
+      "Repair": "Rozpoczęto naprawę."
+    },
+    "RestartRequired": {
+      "Uninstall": "Dezinstalacja zakończona. Wymagane jest ponowne uruchomienie komputera.",
+      "Install": "Instalacja zakończona. Wymagany jest restart.",
+      "Repair": "Naprawa zakończona. Wymagany jest restart."
+    },
+    "Complete": {
+      "Uninstall": "Dezinstalacja zakończona.",
+      "Install": "Instalacja zakończona.",
+      "Repair": "Naprawa zakończona."
+    },
+    "FastRetry": {
+      "Uninstall": "Dezinstalacja nie została ukończona.",
+      "Install": "Instalacja nie została ukończona.",
+      "Repair": "Naprawa nie została zakończona."
+    }
+  },
+  "ListSelectionPrompt": {
+    "ListSelectionMessage": "Wybierz element:"
+  }
+}
