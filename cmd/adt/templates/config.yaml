@@ -1,0 +1,67 @@
+# Deployment configuration overlay.
+#
+# Every key is optional: values omitted here fall back to the toolkit's
+# built-in defaults (the same defaults PSAppDeployToolkit ships in
+# config.psd1). The keys use PascalCase to match PSADT, so a PSADT config.psd1
+# translates section-for-section. `$env:NAME` tokens in path values are
+# expanded from the process environment.
+#
+# Delete the sections you don't need — this file only overrides.
+
+Toolkit:
+  # Company name shown in dialog subtitles and balloon notifications.
+  CompanyName: PSAppDeployToolkit
+
+  # Log format: CMTrace (OneTrace-compatible) or Legacy (plain text).
+  LogStyle: CMTrace
+  # Log directory (admin) and the fallback used when not elevated.
+  LogPath: $env:SystemRoot\Logs\Software
+  LogPathNoAdminRights: $env:ProgramData\Logs\Software
+  # Append to an existing log rather than overwriting it.
+  LogAppend: true
+  # Rotate the log at this size (MB) and keep this many previous files.
+  LogMaxSize: 10
+  LogMaxHistory: 10
+  # Echo log lines to the console as well as the file.
+  LogWriteToHost: true
+
+  # Registry root for toolkit state such as deferral history.
+  RegPath: HKLM:\SOFTWARE
+  RegPathNoAdminRights: HKCU:\SOFTWARE
+
+  # File copy engine for Copy-ADTFile: Native or Robocopy.
+  FileCopyMode: Native
+  # Cache directory used by Copy-ADTContentToCache.
+  CachePath: $env:ProgramData\SoftwareCache
+
+MSI:
+  # Default msiexec arguments per mode (the toolkit adds /i, /x, logging, etc.).
+  InstallParams: REBOOT=ReallySuppress /QB-!
+  SilentParams: REBOOT=ReallySuppress /QN
+  UninstallParams: REBOOT=ReallySuppress /QN
+  # Verbose logging switch and how long to wait for the MSI mutex (seconds).
+  LoggingOptions: /L*V
+  MutexWaitTime: 600
+
+UI:
+  # Dialog theme: Fluent (WebView2) or Classic (native fallback).
+  DialogStyle: Fluent
+  # Accent color as 0xAARRGGBB (leave unset to use the system accent).
+  # FluentAccentColor: 0xFF0078D7
+
+  # Show balloon/toast notifications at the start and end of a deployment.
+  BalloonNotifications: true
+  # Exit codes: dialog timeout, and when the user defers.
+  DefaultExitCode: 1618
+  DeferExitCode: 1602
+  # Auto-timeout for installation dialogs (seconds; default 55 minutes).
+  DefaultTimeout: 3300
+
+  # Force a UI language instead of the OS culture, e.g. "de" or "fr".
+  # LanguageOverride: de
+
+Assets:
+  # Logo/Banner/TaskbarIcon accept a file path or a Base64 string. Unset uses
+  # the toolkit's bundled artwork.
+  # Logo: Assets\logo.png
+  # Banner: Assets\banner.png

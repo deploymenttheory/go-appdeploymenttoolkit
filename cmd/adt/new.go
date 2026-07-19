@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,6 +9,9 @@ import (
 
 	"github.com/spf13/cobra"
 )
+
+//go:embed templates/config.yaml
+var sampleConfig []byte
 
 func newNewCommand() *cobra.Command {
 	var appName string
@@ -51,11 +55,20 @@ func scaffold(dir, appName string) error {
 		return fmt.Errorf("writing go.mod: %w", err)
 	}
 
+	// Seed a commented config overlay so authors can see and tune the knobs.
+	configPath := filepath.Join(dir, "Config", "config.yaml")
+	if _, err := os.Stat(configPath); err != nil {
+		if err := os.WriteFile(configPath, sampleConfig, 0o644); err != nil {
+			return fmt.Errorf("writing Config/config.yaml: %w", err)
+		}
+	}
+
 	fmt.Printf("Scaffolded deployment for %q in %s\n", appName, dir)
 	fmt.Println("Next steps:")
 	fmt.Println("  1. cd", dir, "&& go mod tidy")
 	fmt.Println("  2. Drop your installer under Files/ and edit the Install phase in main.go")
-	fmt.Println("  3. GOOS=windows go build -o Invoke-AppDeployToolkit.exe")
+	fmt.Println("  3. Tune Config/config.yaml if the defaults don't suit")
+	fmt.Println("  4. GOOS=windows go build -o Invoke-AppDeployToolkit.exe")
 	return nil
 }
 
