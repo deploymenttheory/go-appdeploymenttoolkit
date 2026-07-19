@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/psadt"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/adt"
 )
 
 func newRunCommand() *cobra.Command {
@@ -56,8 +56,8 @@ func runPackage(ctx context.Context, dir, deploymentType, deployMode string, sup
 		return err
 	}
 
-	dep := &psadt.Deployment{
-		Session: psadt.SessionOptions{
+	dep := &adt.Deployment{
+		Session: adt.SessionOptions{
 			AppVendor:         product.vendor,
 			AppName:           product.name,
 			AppVersion:        product.version,
@@ -66,16 +66,16 @@ func runPackage(ctx context.Context, dir, deploymentType, deployMode string, sup
 			StringsOverlayPath: optionalPath(filepath.Join(dir, "Strings", "strings.yaml")),
 		},
 		Args: buildRunArgs(deploymentType, deployMode, suppressReboot),
-		Install: func(ctx context.Context, s *psadt.DeploymentSession) error {
-			_, err := psadt.StartADTMsiProcess(ctx, psadt.StartADTMsiProcessOptions{Action: "Install", Path: msi})
+		Install: func(ctx context.Context, s *adt.DeploymentSession) error {
+			_, err := adt.StartADTMsiProcess(ctx, adt.StartADTMsiProcessOptions{Action: "Install", Path: msi})
 			return err
 		},
-		Uninstall: func(ctx context.Context, s *psadt.DeploymentSession) error {
-			_, err := psadt.StartADTMsiProcess(ctx, psadt.StartADTMsiProcessOptions{Action: "Uninstall", Path: msi})
+		Uninstall: func(ctx context.Context, s *adt.DeploymentSession) error {
+			_, err := adt.StartADTMsiProcess(ctx, adt.StartADTMsiProcessOptions{Action: "Uninstall", Path: msi})
 			return err
 		},
-		Repair: func(ctx context.Context, s *psadt.DeploymentSession) error {
-			_, err := psadt.StartADTMsiProcess(ctx, psadt.StartADTMsiProcessOptions{Action: "Repair", Path: msi})
+		Repair: func(ctx context.Context, s *adt.DeploymentSession) error {
+			_, err := adt.StartADTMsiProcess(ctx, adt.StartADTMsiProcessOptions{Action: "Repair", Path: msi})
 			return err
 		},
 	}
@@ -112,7 +112,7 @@ func discoverZeroConfigMSI(filesDir string) (string, error) {
 		}
 	}
 	if len(msis) == 0 {
-		return "", fmt.Errorf("no MSI found in %s: %w", filesDir, psadt.ErrNotFound)
+		return "", fmt.Errorf("no MSI found in %s: %w", filesDir, adt.ErrNotFound)
 	}
 	sort.Strings(msis)
 	chosen := msis[0]
@@ -144,7 +144,7 @@ type msiProduct struct {
 // to the file name so the CLI still cross-compiles and self-tests.
 func readMSIProduct(ctx context.Context, msiPath string) (msiProduct, error) {
 	fallback := msiProduct{name: strings.TrimSuffix(filepath.Base(msiPath), filepath.Ext(msiPath)), version: "1.0.0"}
-	props, err := psadt.GetADTMsiTableProperty(ctx, psadt.GetADTMsiTablePropertyOptions{Path: msiPath})
+	props, err := adt.GetADTMsiTableProperty(ctx, adt.GetADTMsiTablePropertyOptions{Path: msiPath})
 	if err != nil {
 		return fallback, nil //nolint:nilerr // metadata is best-effort; name-based fallback is fine
 	}

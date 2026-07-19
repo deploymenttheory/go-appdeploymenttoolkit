@@ -14,39 +14,39 @@ import (
 // Sentinel errors used across the toolkit. Callers match them with errors.Is.
 var (
 	// ErrNotImplemented marks a PSADT function that has not been ported yet.
-	ErrNotImplemented = errors.New("psadt: not implemented")
+	ErrNotImplemented = errors.New("adt: not implemented")
 
 	// ErrNoActiveSession is returned when no deployment session is open.
-	ErrNoActiveSession = errors.New("psadt: no active deployment session")
+	ErrNoActiveSession = errors.New("adt: no active deployment session")
 
 	// ErrSessionClosed is returned when operating on a closed session.
-	ErrSessionClosed = errors.New("psadt: deployment session already closed")
+	ErrSessionClosed = errors.New("adt: deployment session already closed")
 
 	// ErrDeferred signals that the user chose to defer the deployment.
-	ErrDeferred = errors.New("psadt: deployment deferred by user")
+	ErrDeferred = errors.New("adt: deployment deferred by user")
 
 	// ErrUserCancelled signals that the user cancelled a dialog or the
 	// welcome-prompt countdown was aborted.
-	ErrUserCancelled = errors.New("psadt: cancelled by user")
+	ErrUserCancelled = errors.New("adt: cancelled by user")
 
 	// ErrTimeout signals that a dialog or wait operation timed out.
-	ErrTimeout = errors.New("psadt: operation timed out")
+	ErrTimeout = errors.New("adt: operation timed out")
 
 	// ErrNotWindows is returned by Windows-only operations invoked on a
 	// non-Windows platform (only possible in tests and tooling).
-	ErrNotWindows = errors.New("psadt: operation requires Windows")
+	ErrNotWindows = errors.New("adt: operation requires Windows")
 
 	// ErrNotFound is a generic not-found condition (registry value, file,
 	// service, application...) distinct from a syscall failure.
-	ErrNotFound = errors.New("psadt: not found")
+	ErrNotFound = errors.New("adt: not found")
 
 	// ErrInvalidOption reports invalid or conflicting option values passed
 	// to a public toolkit function.
-	ErrInvalidOption = errors.New("psadt: invalid option")
+	ErrInvalidOption = errors.New("adt: invalid option")
 
 	// ErrDialogUnavailable is returned when no dialog can be shown (no user
 	// session reachable and no fallback possible).
-	ErrDialogUnavailable = errors.New("psadt: dialog unavailable")
+	ErrDialogUnavailable = errors.New("adt: dialog unavailable")
 )
 
 // Win32Error wraps a WIN32_ERROR (GetLastError-domain) code.

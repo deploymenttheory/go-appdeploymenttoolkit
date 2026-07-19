@@ -11,24 +11,24 @@ import (
 	"context"
 	"errors"
 
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/psadt"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/adt"
 )
 
 func main() {
-	(&psadt.Deployment{
-		Session: psadt.SessionOptions{
+	(&adt.Deployment{
+		Session: adt.SessionOptions{
 			AppVendor:  "VideoLAN",
 			AppName:    "VLC media player",
 			AppVersion: "3.0.23",
 			AppArch:    "x64",
-			AppProcessesToClose: []psadt.ProcessObject{
+			AppProcessesToClose: []adt.ProcessObject{
 				{Name: "vlc", Description: "VLC media player"},
 			},
 			RequireAdmin: true,
 		},
 
-		PreInstall: func(ctx context.Context, s *psadt.DeploymentSession) error {
-			result, err := psadt.ShowADTInstallationWelcome(ctx, psadt.ShowADTInstallationWelcomeOptions{
+		PreInstall: func(ctx context.Context, s *adt.DeploymentSession) error {
+			result, err := adt.ShowADTInstallationWelcome(ctx, adt.ShowADTInstallationWelcomeOptions{
 				CloseProcesses:          s.Options().AppProcessesToClose,
 				AllowDefer:              true,
 				DeferTimes:              3,
@@ -40,26 +40,26 @@ func main() {
 			}
 			if result.Deferred {
 				// The runner maps ErrDeferred to the configured defer exit code.
-				return psadt.ErrDeferred
+				return adt.ErrDeferred
 			}
-			return psadt.ShowADTInstallationProgress(ctx, psadt.ShowADTInstallationProgressOptions{
+			return adt.ShowADTInstallationProgress(ctx, adt.ShowADTInstallationProgressOptions{
 				StatusMessage: "Installing VLC media player...",
 			})
 		},
 
-		Install: func(ctx context.Context, s *psadt.DeploymentSession) error {
-			_, err := psadt.StartADTProcess(ctx, psadt.StartADTProcessOptions{
+		Install: func(ctx context.Context, s *adt.DeploymentSession) error {
+			_, err := adt.StartADTProcess(ctx, adt.StartADTProcessOptions{
 				FilePath:     "vlc-3.0.23-win64.exe",
 				ArgumentList: "/L=1033 /S",
 			})
 			return err
 		},
 
-		PostInstall: func(ctx context.Context, s *psadt.DeploymentSession) error {
-			if err := psadt.CloseADTInstallationProgress(ctx); err != nil {
+		PostInstall: func(ctx context.Context, s *adt.DeploymentSession) error {
+			if err := adt.CloseADTInstallationProgress(ctx); err != nil {
 				return err
 			}
-			_, err := psadt.ShowADTInstallationPrompt(ctx, psadt.ShowADTInstallationPromptOptions{
+			_, err := adt.ShowADTInstallationPrompt(ctx, adt.ShowADTInstallationPromptOptions{
 				Message:         "VLC media player installation complete.",
 				ButtonRightText: "OK",
 				Icon:            "Information",
@@ -68,12 +68,12 @@ func main() {
 			return err
 		},
 
-		Uninstall: func(ctx context.Context, s *psadt.DeploymentSession) error {
-			err := psadt.UninstallADTApplication(ctx, psadt.UninstallADTApplicationOptions{
+		Uninstall: func(ctx context.Context, s *adt.DeploymentSession) error {
+			err := adt.UninstallADTApplication(ctx, adt.UninstallADTApplicationOptions{
 				Name:      []string{"VLC media player"},
 				NameMatch: "Exact",
 			})
-			if errors.Is(err, psadt.ErrNotFound) {
+			if errors.Is(err, adt.ErrNotFound) {
 				return nil // already gone
 			}
 			return err

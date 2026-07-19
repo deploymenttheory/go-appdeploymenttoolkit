@@ -1,4 +1,4 @@
-// Package msipkg hosts the Windows Installer domain logic behind the psadt
+// Package msipkg hosts the Windows Installer domain logic behind the adt
 // MSI facade functions: the msiexec exit-code message catalog, MSI database
 // property access (Windows only) and uninstall-registry application
 // enumeration through the regkey backend seam.

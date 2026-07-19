@@ -16,13 +16,13 @@ Every exported function is a 1:1 port of the PSADT PowerShell function of the
 same name with the hyphens removed, so existing deployment scripts translate
 mechanically:
 
-| PowerShell (PSADT) | Go (`psadt`) |
+| PowerShell (PSADT) | Go (`adt`) |
 | --- | --- |
-| `Open-ADTSession` | `psadt.OpenADTSession` |
-| `Start-ADTMsiProcess` | `psadt.StartADTMsiProcess` |
-| `Show-ADTInstallationWelcome` | `psadt.ShowADTInstallationWelcome` |
-| `Copy-ADTFile` | `psadt.CopyADTFile` |
-| `Set-ADTRegistryKey` | `psadt.SetADTRegistryKey` |
+| `Open-ADTSession` | `adt.OpenADTSession` |
+| `Start-ADTMsiProcess` | `adt.StartADTMsiProcess` |
+| `Show-ADTInstallationWelcome` | `adt.ShowADTInstallationWelcome` |
+| `Copy-ADTFile` | `adt.CopyADTFile` |
+| `Set-ADTRegistryKey` | `adt.SetADTRegistryKey` |
 
 PowerShell-runtime plumbing (`Initialize-ADTFunction`, `New-ADTErrorRecord`, …)
 has no Go counterpart; the `*-ADTModuleCallback` family is replaced by
@@ -39,25 +39,25 @@ package main
 import (
     "context"
 
-    "github.com/deploymenttheory/go-appdeploymenttoolkit/psadt"
+    "github.com/deploymenttheory/go-appdeploymenttoolkit/adt"
 )
 
 func main() {
-    (&psadt.Deployment{
-        Session: psadt.SessionOptions{
+    (&adt.Deployment{
+        Session: adt.SessionOptions{
             AppVendor:  "VideoLAN",
             AppName:    "VLC media player",
             AppVersion: "3.0.23",
-            AppProcessesToClose: []psadt.ProcessObject{{Name: "vlc", Description: "VLC media player"}},
+            AppProcessesToClose: []adt.ProcessObject{{Name: "vlc", Description: "VLC media player"}},
         },
-        PreInstall: func(ctx context.Context, s *psadt.DeploymentSession) error {
-            _, err := psadt.ShowADTInstallationWelcome(ctx, psadt.ShowADTInstallationWelcomeOptions{
+        PreInstall: func(ctx context.Context, s *adt.DeploymentSession) error {
+            _, err := adt.ShowADTInstallationWelcome(ctx, adt.ShowADTInstallationWelcomeOptions{
                 CloseProcesses: s.Options().AppProcessesToClose, AllowDefer: true, DeferTimes: 3,
             })
             return err
         },
-        Install: func(ctx context.Context, s *psadt.DeploymentSession) error {
-            _, err := psadt.StartADTMsiProcess(ctx, psadt.StartADTMsiProcessOptions{
+        Install: func(ctx context.Context, s *adt.DeploymentSession) error {
+            _, err := adt.StartADTMsiProcess(ctx, adt.StartADTMsiProcessOptions{
                 Action: "Install", Path: "vlc.msi",
             })
             return err
@@ -106,7 +106,7 @@ interactive user session via a same-binary client re-exec over anonymous pipes.
 ## Package layout
 
 ```
-psadt/        public SDK — all ~169 ported functions (one file per category)
+adt/          public SDK — all ~169 ported functions (one file per category)
 internal/     domain implementations behind portable seams
 cmd/adt/      CLI runner (run / new / client)
 examples/     runnable deployment programs
@@ -119,13 +119,15 @@ All five porting phases are complete: core session engine, system domains
 (registry, filesystem, INI, process, MSI, services, shortcuts, users), UI and
 cross-session client-server, CLI runner, and the long tail. See
 [`docs/windows-smoke.md`](docs/windows-smoke.md) for the manual Windows
-verification checklist and the one known gap (the SCCM `TriggerSchedule` WMI
-call, pending a compatible WMI binding).
+verification checklist (the syscall layers are cross-compiled and linted here
+but only execute on Windows).
 
 ## Supporting libraries
 
 - [`go-bindings-win32`](https://github.com/deploymenttheory/go-bindings-win32) —
   generated Win32 API bindings (MSI, WTS, registry, shell, tasks, …).
+- [`go-bindings-wmi`](https://github.com/deploymenttheory/go-bindings-wmi) —
+  typed WMI runtime (ConfigMgr `TriggerSchedule`, `Win32_QuickFixEngineering`).
 
 ## License
 

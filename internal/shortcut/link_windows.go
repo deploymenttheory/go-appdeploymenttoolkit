@@ -18,7 +18,7 @@ var clsidShellLink = win32.GUID{Data1: 0x00021401, Data4: [8]byte{0xc0, 0, 0, 0,
 
 // withShellLink runs fn with an initialized IShellLinkW + IPersistFile pair.
 func withShellLink(fn func(link *shell.IShellLinkW, file *systemcom.IPersistFile) error) error {
-	if err := systemcom.CoInitializeEx(uint32(systemcom.COINIT_APARTMENTTHREADED)); err != nil {
+	if _, err := systemcom.CoInitializeEx(uint32(systemcom.COINIT_APARTMENTTHREADED)); err != nil {
 		return fmt.Errorf("shortcut: CoInitializeEx: %w", err)
 	}
 	defer systemcom.CoUninitialize()

@@ -1,0 +1,24 @@
+# Config overlay for the VLC interactive deployment.
+#
+# Only the keys that differ from the toolkit defaults are set here; everything
+# else falls back to the built-in defaults. The deployment picks this file up
+# automatically when run via `adt run`, or you can pass its path as
+# SessionOptions.ConfigOverlayPath.
+
+Toolkit:
+  # Branding shown in dialog subtitles and balloon notifications.
+  CompanyName: VideoLAN
+  # Keep this deployment's logs in their own subfolder.
+  LogToSubfolder: true
+
+UI:
+  # Fluent (WebView2) dialogs with a VLC-orange accent (0xAARRGGBB).
+  DialogStyle: Fluent
+  FluentAccentColor: 0xFFFF8800
+  # Give users longer to respond before a dialog times out (20 minutes).
+  DefaultTimeout: 1200
+
+MSI:
+  # This package installs an EXE, but if it also ran MSIs, wait up to 5
+  # minutes for the Windows Installer service instead of the default 10.
+  MutexWaitTime: 300

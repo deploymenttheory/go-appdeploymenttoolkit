@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,6 +9,9 @@ import (
 
 	"github.com/spf13/cobra"
 )
+
+//go:embed templates/config.yaml
+var sampleConfig []byte
 
 func newNewCommand() *cobra.Command {
 	var appName string
@@ -51,11 +55,20 @@ func scaffold(dir, appName string) error {
 		return fmt.Errorf("writing go.mod: %w", err)
 	}
 
+	// Seed a commented config overlay so authors can see and tune the knobs.
+	configPath := filepath.Join(dir, "Config", "config.yaml")
+	if _, err := os.Stat(configPath); err != nil {
+		if err := os.WriteFile(configPath, sampleConfig, 0o644); err != nil {
+			return fmt.Errorf("writing Config/config.yaml: %w", err)
+		}
+	}
+
 	fmt.Printf("Scaffolded deployment for %q in %s\n", appName, dir)
 	fmt.Println("Next steps:")
 	fmt.Println("  1. cd", dir, "&& go mod tidy")
 	fmt.Println("  2. Drop your installer under Files/ and edit the Install phase in main.go")
-	fmt.Println("  3. GOOS=windows go build -o Invoke-AppDeployToolkit.exe")
+	fmt.Println("  3. Tune Config/config.yaml if the defaults don't suit")
+	fmt.Println("  4. GOOS=windows go build -o Invoke-AppDeployToolkit.exe")
 	return nil
 }
 
@@ -87,43 +100,43 @@ package main
 import (
 	"context"
 
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/psadt"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/adt"
 )
 
 func main() {
-	(&psadt.Deployment{
-		Session: psadt.SessionOptions{
+	(&adt.Deployment{
+		Session: adt.SessionOptions{
 			AppVendor:  "",
 			AppName:    "{{AppName}}",
 			AppVersion: "1.0.0",
 			AppArch:    "x64",
 		},
 
-		PreInstall: func(ctx context.Context, s *psadt.DeploymentSession) error {
-			_, err := psadt.ShowADTInstallationWelcome(ctx, psadt.ShowADTInstallationWelcomeOptions{
-				CloseProcesses: []psadt.ProcessObject{},
+		PreInstall: func(ctx context.Context, s *adt.DeploymentSession) error {
+			_, err := adt.ShowADTInstallationWelcome(ctx, adt.ShowADTInstallationWelcomeOptions{
+				CloseProcesses: []adt.ProcessObject{},
 				AllowDefer:     true,
 				DeferTimes:     3,
 			})
 			return err
 		},
 
-		Install: func(ctx context.Context, s *psadt.DeploymentSession) error {
+		Install: func(ctx context.Context, s *adt.DeploymentSession) error {
 			// Example: install an MSI dropped under Files/.
-			// _, err := psadt.StartADTMsiProcess(ctx, psadt.StartADTMsiProcessOptions{
+			// _, err := adt.StartADTMsiProcess(ctx, adt.StartADTMsiProcessOptions{
 			//     Action: "Install", Path: "{{AppName}}.msi",
 			// })
-			return psadt.WriteADTLogEntry(ctx, psadt.LogEntryOptions{
+			return adt.WriteADTLogEntry(ctx, adt.LogEntryOptions{
 				Message: []string{"Installing {{AppName}}..."},
 			})
 		},
 
-		PostInstall: func(ctx context.Context, s *psadt.DeploymentSession) error {
+		PostInstall: func(ctx context.Context, s *adt.DeploymentSession) error {
 			return nil
 		},
 
-		Uninstall: func(ctx context.Context, s *psadt.DeploymentSession) error {
-			return psadt.WriteADTLogEntry(ctx, psadt.LogEntryOptions{
+		Uninstall: func(ctx context.Context, s *adt.DeploymentSession) error {
+			return adt.WriteADTLogEntry(ctx, adt.LogEntryOptions{
 				Message: []string{"Uninstalling {{AppName}}..."},
 			})
 		},
