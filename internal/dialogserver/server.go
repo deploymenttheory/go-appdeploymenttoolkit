@@ -1,5 +1,5 @@
 // Package dialogserver is the deployment-side driver for the toolkit's user
-// interface. It exposes a small Renderer interface that the psadt facade calls
+// interface. It exposes a small Renderer interface that the adt facade calls
 // uniformly, backed either by an in-process renderer (when the deployment is
 // already running interactively in the target user's session) or by a
 // pipe-backed renderer that marshals each call to a client process launched in
@@ -39,7 +39,7 @@ type LaunchConfig struct {
 // session.
 //
 // Silent- and non-interactive-mode short-circuiting is the caller's
-// responsibility (see psadt/dialogs.go): the server never suppresses a dialog
+// responsibility (see adt/dialogs.go): the server never suppresses a dialog
 // on its own, it renders whatever it is asked to render.
 type Renderer interface {
 	// ShowModal renders a modal dialog and blocks until the user answers, the
@@ -66,7 +66,7 @@ type Renderer interface {
 	Close()
 }
 
-// DialogServer is the deployment-side handle the psadt facade talks to. It owns
+// DialogServer is the deployment-side handle the adt facade talks to. It owns
 // a single Renderer for the process lifetime.
 //
 // The lock guards only the renderer pointer and closed flag; it is never held

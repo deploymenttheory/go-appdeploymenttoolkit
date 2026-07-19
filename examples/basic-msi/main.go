@@ -9,37 +9,37 @@ package main
 import (
 	"context"
 
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/psadt"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/adt"
 )
 
 func main() {
-	(&psadt.Deployment{
-		Session: psadt.SessionOptions{
+	(&adt.Deployment{
+		Session: adt.SessionOptions{
 			AppVendor:           "Contoso",
 			AppName:             "Example App",
 			AppVersion:          "1.0.0",
 			AppArch:             "x64",
-			AppProcessesToClose: []psadt.ProcessObject{{Name: "notepad", Description: "Notepad"}},
+			AppProcessesToClose: []adt.ProcessObject{{Name: "notepad", Description: "Notepad"}},
 			RequireAdmin:        false,
 		},
 
-		PreInstall: func(ctx context.Context, s *psadt.DeploymentSession) error {
-			return psadt.WriteADTLogEntry(ctx, psadt.LogEntryOptions{
+		PreInstall: func(ctx context.Context, s *adt.DeploymentSession) error {
+			return adt.WriteADTLogEntry(ctx, adt.LogEntryOptions{
 				Message: []string{"Preparing installation of " + s.InstallTitle()},
 			})
 		},
 
-		Install: func(ctx context.Context, s *psadt.DeploymentSession) error {
+		Install: func(ctx context.Context, s *adt.DeploymentSession) error {
 			// Phase 2 will provide StartADTMsiProcess; until then this logs intent.
-			return psadt.WriteADTLogEntry(ctx, psadt.LogEntryOptions{
+			return adt.WriteADTLogEntry(ctx, adt.LogEntryOptions{
 				Message: []string{"Would install " + s.InstallTitle() + " from " + s.DirFiles()},
 			})
 		},
 
-		PostInstall: func(ctx context.Context, s *psadt.DeploymentSession) error {
-			return psadt.WriteADTLogEntry(ctx, psadt.LogEntryOptions{
+		PostInstall: func(ctx context.Context, s *adt.DeploymentSession) error {
+			return adt.WriteADTLogEntry(ctx, adt.LogEntryOptions{
 				Message:  []string{"Installation finished."},
-				Severity: psadt.LogSeveritySuccess,
+				Severity: adt.LogSeveritySuccess,
 			})
 		},
 	}).Run(context.Background())

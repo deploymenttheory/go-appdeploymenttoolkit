@@ -100,13 +100,13 @@ linters:
       # translate line-for-line.
       - linters:
           - tagliatelle
-        path: (internal/config|internal/strtab|psadt)/
+        path: (internal/config|internal/strtab|adt)/
 
       # wrapcheck treats this module's own internal/* packages as external;
       # toolkit errors are wrapped at their origin (internal/winerr).
       - linters:
           - wrapcheck
-        path: (internal|psadt|cmd|examples)/
+        path: (internal|adt|cmd|examples)/
 
       # only run “forbidigo” on tests (silence everywhere else)
       - path-except: _test\.go

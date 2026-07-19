@@ -80,7 +80,7 @@ type LaunchOptions struct {
 	// will be empty), mirroring ProcessStartInfo.UseShellExecute.
 	UseShellExecute bool
 	// WaitForMsiExec asks the caller to gate the launch on the
-	// Global\_MSIExecute mutex (honored by the psadt facade, not here).
+	// Global\_MSIExecute mutex (honored by the adt facade, not here).
 	WaitForMsiExec bool
 	// MsiExecWaitTime bounds the WaitForMsiExec mutex wait.
 	MsiExecWaitTime time.Duration

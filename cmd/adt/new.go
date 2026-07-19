@@ -87,43 +87,43 @@ package main
 import (
 	"context"
 
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/psadt"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/adt"
 )
 
 func main() {
-	(&psadt.Deployment{
-		Session: psadt.SessionOptions{
+	(&adt.Deployment{
+		Session: adt.SessionOptions{
 			AppVendor:  "",
 			AppName:    "{{AppName}}",
 			AppVersion: "1.0.0",
 			AppArch:    "x64",
 		},
 
-		PreInstall: func(ctx context.Context, s *psadt.DeploymentSession) error {
-			_, err := psadt.ShowADTInstallationWelcome(ctx, psadt.ShowADTInstallationWelcomeOptions{
-				CloseProcesses: []psadt.ProcessObject{},
+		PreInstall: func(ctx context.Context, s *adt.DeploymentSession) error {
+			_, err := adt.ShowADTInstallationWelcome(ctx, adt.ShowADTInstallationWelcomeOptions{
+				CloseProcesses: []adt.ProcessObject{},
 				AllowDefer:     true,
 				DeferTimes:     3,
 			})
 			return err
 		},
 
-		Install: func(ctx context.Context, s *psadt.DeploymentSession) error {
+		Install: func(ctx context.Context, s *adt.DeploymentSession) error {
 			// Example: install an MSI dropped under Files/.
-			// _, err := psadt.StartADTMsiProcess(ctx, psadt.StartADTMsiProcessOptions{
+			// _, err := adt.StartADTMsiProcess(ctx, adt.StartADTMsiProcessOptions{
 			//     Action: "Install", Path: "{{AppName}}.msi",
 			// })
-			return psadt.WriteADTLogEntry(ctx, psadt.LogEntryOptions{
+			return adt.WriteADTLogEntry(ctx, adt.LogEntryOptions{
 				Message: []string{"Installing {{AppName}}..."},
 			})
 		},
 
-		PostInstall: func(ctx context.Context, s *psadt.DeploymentSession) error {
+		PostInstall: func(ctx context.Context, s *adt.DeploymentSession) error {
 			return nil
 		},
 
-		Uninstall: func(ctx context.Context, s *psadt.DeploymentSession) error {
-			return psadt.WriteADTLogEntry(ctx, psadt.LogEntryOptions{
+		Uninstall: func(ctx context.Context, s *adt.DeploymentSession) error {
+			return adt.WriteADTLogEntry(ctx, adt.LogEntryOptions{
 				Message: []string{"Uninstalling {{AppName}}..."},
 			})
 		},
