@@ -17,7 +17,7 @@ Every built binary accepts the standard frontend flags: `-DeploymentType`
 | Example | Shows |
 | --- | --- |
 | [`basic-msi`](basic-msi) | A complete silent MSI deployment: `StartADTMsiProcess`, `CopyADTFile`, a registry deployment marker with `SetADTRegistryKey`, and full cleanup (`UninstallADTApplication` + `RemoveADTRegistryKey`) on uninstall. |
-| [`interactive-install`](interactive-install) | An interactive EXE deployment: the welcome/close-apps prompt with deferral (`ShowADTInstallationWelcome`), a progress dialog, `StartADTProcess`, and a completion prompt. |
+| [`interactive-install`](interactive-install) | An interactive EXE deployment: the welcome/close-apps prompt with deferral (`ShowADTInstallationWelcome`), a progress dialog, `StartADTProcess`, and a completion prompt. Ships a worked [`Config/config.yaml`](interactive-install/Config/config.yaml) overlay (branding, Fluent accent color, timeouts). |
 
 ## Example vs. deployment package
 
