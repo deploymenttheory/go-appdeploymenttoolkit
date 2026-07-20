@@ -164,7 +164,12 @@ func buildCloseApps(vm ViewModel, o *ipc.CloseAppsOptions) (ViewModel, error) {
 	}
 	vm.Message = o.Message
 	if o.CustomMessage != "" {
-		vm.Message = o.CustomMessage
+		// Rendered as an additional paragraph beneath the dialog message
+		// (PSADT shows the custom message alongside, not instead of, it).
+		if vm.Labels == nil {
+			vm.Labels = map[string]string{}
+		}
+		vm.Labels["customMessage"] = o.CustomMessage
 	}
 	vm.Apps = make([]appVM, 0, len(o.Apps))
 	for _, a := range o.Apps {
@@ -196,6 +201,9 @@ func buildCloseApps(vm ViewModel, o *ipc.CloseAppsOptions) (ViewModel, error) {
 	if o.CountdownSeconds > 0 {
 		vm.CountdownSeconds = o.CountdownSeconds
 		vm.CountdownButton = ButtonContinue
+		if o.ForcedCountdown {
+			vm.CountdownLabel = "Automatic Continue Countdown"
+		}
 	}
 	return vm, nil
 }

@@ -46,6 +46,15 @@ type SessionOptions struct {
 	StringsOverlayPath string // package Strings/strings.yaml
 	LanguageOverride   string // wins over config UI.LanguageOverride
 
+	// Auto deploy-mode detection opt-outs, mirroring Open-ADTSession. With
+	// DeployMode Auto the session resolves NonInteractive during OOBE/ESP,
+	// Silent in session 0 without an interactive station, and Silent when no
+	// AppProcessesToClose entry is running (or none is specified).
+	NoOobeDetection               bool // skip the OOBE/ESP checks
+	NoProcessDetection            bool // skip the processes-to-close checks
+	NoSessionDetection            bool // skip the session-0 checks
+	ProcessInteractivityDetection bool // in session 0, require an interactive station
+
 	// Hooks is the Go port of the Add-ADTModuleCallback families: functions
 	// invoked around session open and close.
 	Hooks SessionHooks
@@ -81,17 +90,27 @@ func (o SessionOptions) internalOptions() session.Options {
 		ConfigOverlayPath:      o.ConfigOverlayPath,
 		StringsOverlayPath:     o.StringsOverlayPath,
 		LanguageOverride:       o.LanguageOverride,
+
+		NoOobeDetection:               o.NoOobeDetection,
+		NoProcessDetection:            o.NoProcessDetection,
+		NoSessionDetection:            o.NoSessionDetection,
+		ProcessInteractivityDetection: o.ProcessInteractivityDetection,
 	}
 }
 
 // SessionHooks carries the module callback stages: Starting runs before the
 // session opens, Opening right after it opens, Closing before it closes and
-// Finishing after it has closed.
+// Finishing after it has closed. OnLogEntry receives every rendered log
+// entry, and OnDefer runs when the welcome prompt resolves to a deferral
+// (ports of PSADT's OnLogEntry/OnDefer module callbacks).
 type SessionHooks struct {
 	Starting  []func(ctx context.Context) error
 	Opening   []func(ctx context.Context, s *DeploymentSession) error
 	Closing   []func(ctx context.Context, s *DeploymentSession) error
 	Finishing []func(ctx context.Context) error
+	// OnLogEntry must not call session logging APIs (it would re-enter).
+	OnLogEntry []func(e LogEntry)
+	OnDefer    []func(ctx context.Context, s *DeploymentSession)
 }
 
 // sessionStack tracks open sessions like PSADT's module session stack.
@@ -110,7 +129,15 @@ func OpenADTSession(ctx context.Context, opts SessionOptions) (*DeploymentSessio
 			return nil, err
 		}
 	}
-	s, err := session.Open(ctx, opts.internalOptions(), session.Deps{})
+	deps := session.Deps{}
+	if entryHooks := opts.Hooks.OnLogEntry; len(entryHooks) > 0 {
+		deps.LogEcho = func(e LogEntry) {
+			for _, h := range entryHooks {
+				h(e)
+			}
+		}
+	}
+	s, err := session.Open(ctx, opts.internalOptions(), deps)
 	if err != nil {
 		return nil, err
 	}
@@ -183,4 +210,29 @@ func CloseADTSession(ctx context.Context, s *DeploymentSession) int {
 // of whether the process has administrative rights.
 func TestADTCallerIsAdmin() bool {
 	return session.IsCallerAdmin()
+}
+
+// sessionHooks returns the hooks registered for an open session (zero value
+// after close or for an unknown session).
+func sessionHooks(s *DeploymentSession) SessionHooks {
+	sessionStack.mu.Lock()
+	defer sessionStack.mu.Unlock()
+	return sessionStack.hooks[s]
+}
+
+// AddADTSessionClosingCallback appends a Closing hook to an already-open
+// session, so features enabled mid-deployment (e.g. BlockExecution) can
+// register their cleanup to run at CloseADTSession.
+func AddADTSessionClosingCallback(
+	s *DeploymentSession,
+	fn func(ctx context.Context, s *DeploymentSession) error,
+) {
+	sessionStack.mu.Lock()
+	defer sessionStack.mu.Unlock()
+	if sessionStack.hooks == nil {
+		sessionStack.hooks = map[*DeploymentSession]SessionHooks{}
+	}
+	h := sessionStack.hooks[s]
+	h.Closing = append(h.Closing, fn)
+	sessionStack.hooks[s] = h
 }

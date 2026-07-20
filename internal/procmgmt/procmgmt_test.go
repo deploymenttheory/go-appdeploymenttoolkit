@@ -36,6 +36,28 @@ func TestParseWindowStyle(t *testing.T) {
 	}
 }
 
+func TestParsePriorityClass(t *testing.T) {
+	cases := []struct {
+		in   string
+		want PriorityClass
+		ok   bool
+	}{
+		{"", PriorityNormal, true},
+		{"normal", PriorityNormal, true},
+		{"Idle", PriorityIdle, true},
+		{"BELOWNORMAL", PriorityBelowNormal, true},
+		{"AboveNormal", PriorityAboveNormal, true},
+		{"high", PriorityHigh, true},
+		{"RealTime", PriorityRealTime, true},
+		{"turbo", PriorityNormal, false},
+	}
+	for _, tc := range cases {
+		got, ok := ParsePriorityClass(tc.in)
+		assert.Equal(t, tc.want, got, tc.in)
+		assert.Equal(t, tc.ok, ok, tc.in)
+	}
+}
+
 func TestLaunchOptionsValidate(t *testing.T) {
 	assert.ErrorIs(t, LaunchOptions{}.Validate(), winerr.ErrInvalidOption, "missing FilePath")
 	assert.ErrorIs(t,

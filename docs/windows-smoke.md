@@ -11,8 +11,11 @@ phase.
 - [ ] `OpenADTSession` writes a CMTrace log under `%SystemRoot%\Logs\Software`
       (admin) or `%ProgramData%\Logs\Software` (non-admin); the header lines
       and divider render correctly in OneTrace/CMTrace.
-- [ ] Auto deploy-mode resolves to Interactive with a console user logged on,
-      Silent as SYSTEM with no active session.
+- [ ] Auto deploy-mode follows the PSADT 4.2 chain: NonInteractive during
+      OOBE/ESP, Silent in session 0 without an interactive station, Silent
+      when no `AppProcessesToClose` entry is running (or none is specified),
+      Interactive otherwise; `-NoOobeDetection`/`-NoProcessDetection`/
+      `-NoSessionDetection` opt out per stage.
 - [ ] Deferral values round-trip with a real PowerShell PSADT deployment of the
       same `InstallName` (shared `HKLM\SOFTWARE\PSAppDeployToolkit\DeferHistory`).
 - [ ] `CloseADTSession` classifies 0/3010/1641/other exit codes and suppresses

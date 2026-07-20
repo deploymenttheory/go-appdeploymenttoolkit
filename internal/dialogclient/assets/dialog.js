@@ -64,6 +64,14 @@
     } else {
       msg.style.display = "none";
     }
+    var labels = vm.labels || {};
+    if (labels.customMessage) {
+      var custom = document.createElement("div");
+      custom.id = "customMessage";
+      custom.className = msg.className || "message";
+      custom.textContent = labels.customMessage;
+      msg.parentNode.insertBefore(custom, msg.nextSibling);
+    }
   }
 
   function renderApps() {

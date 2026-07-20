@@ -326,3 +326,17 @@ func TestApplicationLabel(t *testing.T) {
 	assert.Equal(t, "App 1.0", applicationLabel(InstalledApplication{DisplayName: "App 1.0", DisplayVersion: "1.0"}))
 	assert.Equal(t, "App", applicationLabel(InstalledApplication{DisplayName: "App"}))
 }
+
+func TestMsiExeProcessObjects(t *testing.T) {
+	names := []string{
+		"excel.e|excel.exe",    // short|long pair
+		"WINWORD.EXE",          // bare long name
+		"readme.tx|readme.txt", // not an exe
+		"Excel.E|EXCEL.EXE",    // case-insensitive duplicate
+		"setup.dll",            // not an exe
+	}
+	got := msiExeProcessObjects(names)
+	require.Len(t, got, 2)
+	assert.Equal(t, "excel", got[0].Name)
+	assert.Equal(t, "WINWORD", got[1].Name)
+}

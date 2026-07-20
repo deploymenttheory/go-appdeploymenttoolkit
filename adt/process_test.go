@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/procmgmt"
 	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/winerr"
 )
 
@@ -30,6 +31,61 @@ func skipOnWindows(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("portable process tests use /bin/sh")
 	}
+}
+
+func TestExecutingMessageSecureArguments(t *testing.T) {
+	plan := &processPlan{
+		filePath: `C:\setup.exe`,
+		launch:   procmgmt.LaunchOptions{ArgumentList: "/key secret"},
+	}
+	assert.Contains(t, executingMessage(plan), "secret")
+	plan.secureArgs = true
+	msg := executingMessage(plan)
+	assert.NotContains(t, msg, "secret")
+	assert.Contains(t, msg, "with secure arguments")
+}
+
+func TestDecodeStreamUTF16LE(t *testing.T) {
+	raw := []byte{0xFF, 0xFE, 'h', 0, 'i', 0} // BOM + "hi"
+	assert.Equal(t, "hi", decodeStream(string(raw), "utf-16le"))
+	assert.Equal(t, "plain", decodeStream("plain", ""), "empty encoding passes through")
+}
+
+func TestExpandWindowsEnv(t *testing.T) {
+	t.Setenv("ADT_TEST_VAR", "expanded")
+	assert.Equal(t, `C:\expanded\bin`, expandWindowsEnv(`C:\%ADT_TEST_VAR%\bin`))
+	assert.Equal(t, "%NOPE_UNSET_VAR%", expandWindowsEnv("%NOPE_UNSET_VAR%"),
+		"unknown variables stay verbatim")
+	assert.Equal(t, "no vars", expandWindowsEnv("no vars"))
+	assert.Equal(t, "100%", expandWindowsEnv("100%"), "unpaired percent survives")
+}
+
+func TestStartADTProcessInvalidNewOptions(t *testing.T) {
+	opts := StartADTProcessOptions{FilePath: "x", PriorityClass: "turbo"}
+	_, err := StartADTProcess(context.Background(), opts)
+	assert.ErrorIs(t, err, ErrInvalidOption)
+
+	opts = StartADTProcessOptions{FilePath: "x", TimeoutAction: "retry"}
+	_, err = StartADTProcess(context.Background(), opts)
+	assert.ErrorIs(t, err, ErrInvalidOption)
+
+	opts = StartADTProcessOptions{FilePath: "x", StreamEncoding: "ebcdic"}
+	_, err = StartADTProcess(context.Background(), opts)
+	assert.ErrorIs(t, err, ErrInvalidOption)
+}
+
+func TestStartADTProcessTimeoutActionContinue(t *testing.T) {
+	skipOnWindows(t)
+	opts := StartADTProcessOptions{
+		FilePath:      "/bin/sh",
+		ArgumentList:  `-c "sleep 10"`,
+		Timeout:       100 * time.Millisecond,
+		TimeoutAction: "Continue",
+	}
+	res, err := StartADTProcess(context.Background(), opts)
+	require.NoError(t, err, "TimeoutAction Continue suppresses the timeout error")
+	require.NotNil(t, res)
+	assert.Equal(t, 1618, res.ExitCode)
 }
 
 func TestStartADTProcessSuccess(t *testing.T) {

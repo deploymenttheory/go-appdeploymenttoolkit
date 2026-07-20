@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf16"
 
 	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/config"
 	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/procmgmt"
@@ -80,6 +81,43 @@ type StartADTProcessOptions struct {
 	Timeout time.Duration
 	// NoWait returns immediately after launch with an empty result.
 	NoWait bool
+	// PriorityClass is Idle, BelowNormal, Normal (default, ""), AboveNormal,
+	// High or RealTime.
+	PriorityClass string
+	// Verb launches through ShellExecuteEx with the given verb (e.g.
+	// "runas"); stream capture is unavailable on this path.
+	Verb string
+	// SecureArgumentList keeps ArgumentList out of every log line.
+	SecureArgumentList bool
+	// StandardInput, when non-empty, is piped to the process's stdin.
+	StandardInput string
+	// StreamEncoding decodes captured StdOut/StdErr: "" (UTF-8),
+	// "utf-16le", or "oem" (the console OEM code page; Windows only).
+	StreamEncoding string
+	// NoStreamLogging suppresses logging of captured StdOut/StdErr.
+	NoStreamLogging bool
+	// ExpandEnvironmentVariables expands %VAR% references in FilePath and
+	// ArgumentList before launch.
+	ExpandEnvironmentVariables bool
+	// WaitForChildProcesses waits for the whole spawned process tree, not
+	// just the root process.
+	WaitForChildProcesses bool
+	// KillChildProcessesWithParent terminates surviving children once the
+	// root process exits.
+	KillChildProcessesWithParent bool
+	// NoTerminateOnTimeout leaves the process running when Timeout elapses
+	// (the call still reports the timeout).
+	NoTerminateOnTimeout bool
+	// TimeoutAction is "Error" (default, "") or "Continue": Continue
+	// returns without an error after a timeout.
+	TimeoutAction string
+	// ExitOnProcessFailure is accepted for PSADT parity. The Go contract
+	// already provides it: a failure exit code returns an *ExitError that
+	// Deployment.Run maps onto the session exit code and process exit.
+	ExitOnProcessFailure bool
+	// DenyUserTermination denies PROCESS_TERMINATE on the launched process
+	// to the interactive user.
+	DenyUserTermination bool
 }
 
 // StartADTProcessAsUserOptions mirrors the parameters of
@@ -92,6 +130,18 @@ type StartADTProcessAsUserOptions struct {
 	UserName string
 	// AllUsers launches the process in every logged-on user session.
 	AllUsers bool
+	// UseLinkedAdminToken requires the user's linked (elevated) admin
+	// token; the launch fails when the user has no split token. Mutually
+	// exclusive with the other token switches.
+	UseLinkedAdminToken bool
+	// UseHighestAvailableToken uses the linked admin token when available,
+	// else the base token.
+	UseHighestAvailableToken bool
+	// UseUnelevatedToken forces the limited token even for admin users.
+	UseUnelevatedToken bool
+	// InheritEnvironmentVariables passes the calling process's environment
+	// instead of the target user's own block.
+	InheritEnvironmentVariables bool
 }
 
 // StartADTProcess is the Go port of Start-ADTProcess: it launches a process
@@ -303,12 +353,16 @@ func InvokeADTCommandWithRetries(
 // processPlan is the resolved launch strategy for one Start-ADTProcess
 // invocation.
 type processPlan struct {
-	launch     procmgmt.LaunchOptions
-	success    []int
-	reboot     []int
-	ignore     []string
-	canSetExit bool // session exit-code passback allowed (default code lists)
-	filePath   string
+	launch          procmgmt.LaunchOptions
+	success         []int
+	reboot          []int
+	ignore          []string
+	canSetExit      bool // session exit-code passback allowed (default code lists)
+	filePath        string
+	secureArgs      bool
+	streamEncoding  string
+	noStreamLogging bool
+	timeoutContinue bool // TimeoutAction "Continue"
 }
 
 // launchFunc abstracts "launch and wait" so runProcessPlan serves both the
@@ -321,6 +375,21 @@ func buildProcessPlan(s *DeploymentSession, opts *StartADTProcessOptions) (*proc
 	style, ok := procmgmt.ParseWindowStyle(opts.WindowStyle)
 	if !ok {
 		return nil, fmt.Errorf("adt: WindowStyle %q: %w", opts.WindowStyle, ErrInvalidOption)
+	}
+	priority, ok := procmgmt.ParsePriorityClass(opts.PriorityClass)
+	if !ok {
+		return nil, fmt.Errorf("adt: PriorityClass %q: %w", opts.PriorityClass, ErrInvalidOption)
+	}
+	timeoutContinue, ok := parseTimeoutAction(opts.TimeoutAction)
+	if !ok {
+		return nil, fmt.Errorf("adt: TimeoutAction %q: %w", opts.TimeoutAction, ErrInvalidOption)
+	}
+	if !validStreamEncoding(opts.StreamEncoding) {
+		return nil, fmt.Errorf("adt: StreamEncoding %q: %w", opts.StreamEncoding, ErrInvalidOption)
+	}
+	if opts.ExpandEnvironmentVariables {
+		opts.FilePath = expandWindowsEnv(opts.FilePath)
+		opts.ArgumentList = expandWindowsEnv(opts.ArgumentList)
 	}
 	filePath := resolveProcessFilePath(s, opts.FilePath)
 	workDir := opts.WorkingDirectory
@@ -351,23 +420,57 @@ func buildProcessPlan(s *DeploymentSession, opts *StartADTProcessOptions) (*proc
 	}
 	return &processPlan{
 		launch: procmgmt.LaunchOptions{
-			FilePath:         filePath,
-			ArgumentList:     opts.ArgumentList,
-			WorkingDirectory: workDir,
-			WindowStyle:      style,
-			CreateNoWindow:   opts.CreateNoWindow,
-			UseShellExecute:  opts.UseShellExecute,
-			WaitForMsiExec:   opts.WaitForMsiExec,
-			MsiExecWaitTime:  opts.MsiExecWaitTime,
-			Timeout:          opts.Timeout,
-			NoWait:           opts.NoWait,
+			FilePath:                     filePath,
+			ArgumentList:                 opts.ArgumentList,
+			WorkingDirectory:             workDir,
+			WindowStyle:                  style,
+			CreateNoWindow:               opts.CreateNoWindow,
+			UseShellExecute:              opts.UseShellExecute || opts.Verb != "",
+			WaitForMsiExec:               opts.WaitForMsiExec,
+			MsiExecWaitTime:              opts.MsiExecWaitTime,
+			Timeout:                      opts.Timeout,
+			NoWait:                       opts.NoWait,
+			PriorityClass:                priority,
+			StandardInput:                opts.StandardInput,
+			NoTerminateOnTimeout:         opts.NoTerminateOnTimeout,
+			WaitForChildProcesses:        opts.WaitForChildProcesses,
+			KillChildProcessesWithParent: opts.KillChildProcessesWithParent,
+			Verb:                         opts.Verb,
+			DenyUserTermination:          opts.DenyUserTermination,
 		},
-		success:    success,
-		reboot:     reboot,
-		ignore:     opts.IgnoreExitCodes,
-		canSetExit: canSetExit,
-		filePath:   filePath,
+		success:         success,
+		reboot:          reboot,
+		ignore:          opts.IgnoreExitCodes,
+		canSetExit:      canSetExit,
+		filePath:        filePath,
+		secureArgs:      opts.SecureArgumentList,
+		streamEncoding:  opts.StreamEncoding,
+		noStreamLogging: opts.NoStreamLogging,
+		timeoutContinue: timeoutContinue,
 	}, nil
+}
+
+// parseTimeoutAction parses -TimeoutAction: "" or "Error" (terminate-and-
+// error, the default) vs "Continue" (suppress the timeout error).
+func parseTimeoutAction(s string) (continueOnTimeout, ok bool) {
+	switch strings.ToLower(s) {
+	case "", "error":
+		return false, true
+	case "continue":
+		return true, true
+	default:
+		return false, false
+	}
+}
+
+// validStreamEncoding reports whether the StreamEncoding value is supported.
+func validStreamEncoding(s string) bool {
+	switch strings.ToLower(s) {
+	case "", "utf-16le", "oem":
+		return true
+	default:
+		return false
+	}
 }
 
 // runProcessPlan performs the MSI mutex gate, the launch and the exit-code
@@ -397,6 +500,11 @@ func runProcessPlan(
 	processLog(executingMessage(plan), LogSeverityInfo, "StartADTProcess")
 	res, err := launch(ctx, plan.launch)
 	if err != nil {
+		if errors.Is(err, ErrTimeout) && plan.timeoutContinue {
+			processLog("The process wait timed out; continuing without error per TimeoutAction [Continue].",
+				LogSeverityWarning, "StartADTProcess")
+			return &ProcessResult{ExitCode: msiBusyExitCode}, nil
+		}
 		processLog(fmt.Sprintf("Error occurred while attempting to start the specified process: %v", err),
 			LogSeverityError, "StartADTProcess")
 		return nil, err
@@ -415,8 +523,20 @@ func classifyProcessResult(
 	plan *processPlan,
 	res *procmgmt.LaunchResult,
 ) (*ProcessResult, error) {
-	result := &ProcessResult{ExitCode: res.ExitCode, StdOut: res.StdOut, StdErr: res.StdErr}
+	result := &ProcessResult{
+		ExitCode: res.ExitCode,
+		StdOut:   decodeStream(res.StdOut, plan.streamEncoding),
+		StdErr:   decodeStream(res.StdErr, plan.streamEncoding),
+	}
 	code := res.ExitCode
+	if !plan.noStreamLogging {
+		if out := strings.TrimSpace(result.StdOut); out != "" {
+			processLog("Process StdOut:\n"+out, LogSeverityInfo, "StartADTProcess")
+		}
+		if errOut := strings.TrimSpace(result.StdErr); errOut != "" {
+			processLog("Process StdErr:\n"+errOut, LogSeverityWarning, "StartADTProcess")
+		}
+	}
 	switch {
 	case exitCodeIgnored(plan.ignore, code):
 		processLog(fmt.Sprintf("Execution completed and the exit code [%d] is being ignored.", code),
@@ -494,16 +614,79 @@ func resolveProcessFilePath(s *DeploymentSession, filePath string) string {
 	return candidate
 }
 
-// executingMessage formats the pre-launch log line.
+// executingMessage formats the pre-launch log line. SecureArgumentList keeps
+// the composed arguments out of the log.
 func executingMessage(plan *processPlan) string {
 	suffix := ""
 	if plan.launch.NoWait {
 		suffix = " without waiting"
 	}
 	if plan.launch.ArgumentList != "" {
+		if plan.secureArgs {
+			return fmt.Sprintf("Executing [\"%s\"] with secure arguments%s...", plan.filePath, suffix)
+		}
 		return fmt.Sprintf("Executing [\"%s\" %s]%s...", plan.filePath, plan.launch.ArgumentList, suffix)
 	}
 	return fmt.Sprintf("Executing [\"%s\"]%s...", plan.filePath, suffix)
+}
+
+// decodeStream converts a captured raw stream per the StreamEncoding option:
+// "" passes through (UTF-8), "utf-16le" decodes UTF-16 little-endian, "oem"
+// decodes the console OEM code page (Windows only; passthrough elsewhere).
+func decodeStream(s, encoding string) string {
+	switch strings.ToLower(encoding) {
+	case "utf-16le":
+		return decodeUTF16LE(s)
+	case "oem":
+		return decodeOEM(s)
+	default:
+		return s
+	}
+}
+
+// decodeUTF16LE decodes a raw byte string of UTF-16 little-endian text,
+// dropping a leading BOM.
+func decodeUTF16LE(s string) string {
+	b := []byte(s)
+	if len(b) < 2 {
+		return s
+	}
+	u16 := make([]uint16, 0, len(b)/2)
+	for i := 0; i+1 < len(b); i += 2 {
+		u16 = append(u16, uint16(b[i])|uint16(b[i+1])<<8)
+	}
+	if len(u16) > 0 && u16[0] == 0xFEFF {
+		u16 = u16[1:]
+	}
+	return string(utf16.Decode(u16))
+}
+
+// expandWindowsEnv expands %VAR% references from the process environment.
+func expandWindowsEnv(s string) string {
+	if !strings.Contains(s, "%") {
+		return s
+	}
+	var out strings.Builder
+	for {
+		start := strings.IndexByte(s, '%')
+		if start < 0 {
+			break
+		}
+		end := strings.IndexByte(s[start+1:], '%')
+		if end < 0 {
+			break
+		}
+		name := s[start+1 : start+1+end]
+		out.WriteString(s[:start])
+		if val, ok := os.LookupEnv(name); ok && name != "" {
+			out.WriteString(val)
+		} else {
+			out.WriteString("%" + name + "%") // unknown vars stay verbatim
+		}
+		s = s[start+2+end:]
+	}
+	out.WriteString(s)
+	return out.String()
 }
 
 // isMsiExec reports whether the target is the Windows Installer executable.

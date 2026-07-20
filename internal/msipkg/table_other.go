@@ -14,6 +14,11 @@ func AllProperties(msiPath string) (map[string]string, error) {
 	return nil, winerr.Wrap("msipkg: AllProperties "+msiPath, winerr.ErrNotWindows)
 }
 
+// TableColumnStrings requires the Windows Installer runtime.
+func TableColumnStrings(msiPath, table string, column int, transforms []string) ([]string, error) {
+	return nil, winerr.Wrap("msipkg: TableColumnStrings "+msiPath, winerr.ErrNotWindows)
+}
+
 // SetProperty requires the Windows Installer runtime.
 func SetProperty(msiPath, property, value string) error {
 	return winerr.Wrap("msipkg: SetProperty "+msiPath, winerr.ErrNotWindows)

@@ -139,7 +139,7 @@ func resolveActiveSetupIdentity(opts SetADTActiveSetupOptions) (key, description
 }
 
 // purgeActiveSetup removes the Active Setup entry from HKLM and from every
-// loaded user hive under HKEY_USERS.
+// user registry hive on the system (loading logged-off profiles' hives).
 func purgeActiveSetup(ctx context.Context, hklmKey, hkcuKey string) error {
 	logToSession(fmt.Sprintf("Removing Active Setup entry [%s].", hklmKey),
 		LogSeverityInfo, "SetADTActiveSetup")
@@ -149,12 +149,13 @@ func purgeActiveSetup(ctx context.Context, hklmKey, hkcuKey string) error {
 	logToSession(fmt.Sprintf("Removing Active Setup entry [%s] for all logged on user registry hives on the system.", hkcuKey),
 		LogSeverityInfo, "SetADTActiveSetup")
 	perUserKey := activeSetupPerUserSubkey(hkcuKey)
-	return InvokeADTAllUsersRegistryAction(ctx, func(ctx context.Context, userSID string) error {
-		return RemoveADTRegistryKey(ctx, RemoveADTRegistryKeyOptions{
-			Key:     `HKU\` + userSID + `\` + perUserKey,
-			Recurse: true,
+	return InvokeADTAllUsersRegistryAction(ctx, InvokeADTAllUsersRegistryActionOptions{},
+		func(ctx context.Context, profile UserProfile) error {
+			return RemoveADTRegistryKey(ctx, RemoveADTRegistryKeyOptions{
+				Key:     `HKU\` + profile.SID + `\` + perUserKey,
+				Recurse: true,
+			})
 		})
-	})
 }
 
 // activeSetupPerUserSubkey strips the HKCU root from an Active Setup key path,

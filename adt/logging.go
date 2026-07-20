@@ -12,6 +12,11 @@ import (
 // LogSeverity mirrors PSADT's LogSeverity enum.
 type LogSeverity = logging.Severity
 
+// LogEntry is one rendered toolkit log entry, as delivered to the
+// SessionHooks.OnLogEntry callbacks (the Go port of the OnLogEntry module
+// callback).
+type LogEntry = logging.Entry
+
 // LogSeverity values.
 const (
 	LogSeveritySuccess = logging.SeveritySuccess

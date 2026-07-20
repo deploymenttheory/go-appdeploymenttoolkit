@@ -80,6 +80,17 @@ func firstNonEmpty(vals ...string) string {
 	return ""
 }
 
+// firstNonEmptyWithSource returns the first non-empty value and its source
+// label from {value, source} pairs; ("", "default") when all are empty.
+func firstNonEmptyWithSource(pairs [][2]string) (value, source string) {
+	for _, p := range pairs {
+		if p[0] != "" {
+			return p[0], p[1]
+		}
+	}
+	return "", "default"
+}
+
 func hostname() string {
 	h, err := os.Hostname()
 	if err != nil {

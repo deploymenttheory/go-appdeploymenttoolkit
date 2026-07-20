@@ -3,14 +3,17 @@ package session
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/config"
 	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/deferral"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/fsops"
 	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/logging"
 	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/regkey"
 	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/strtab"
@@ -54,6 +57,12 @@ type Options struct {
 	ConfigOverlayPath  string // package Config/config.yaml
 	StringsOverlayPath string // package Strings/strings.yaml
 	LanguageOverride   string // wins over config UI.LanguageOverride
+
+	// Auto deploy-mode detection opt-outs (parity with Open-ADTSession).
+	NoOobeDetection               bool // skip OOBE/ESP checks
+	NoProcessDetection            bool // skip processes-to-close checks
+	NoSessionDetection            bool // skip session-0 checks
+	ProcessInteractivityDetection bool // in session 0, require an interactive station
 }
 
 // Deps injects the platform seams; zero values get live defaults on Windows
@@ -69,6 +78,15 @@ type Deps struct {
 	LogEcho func(e logging.Entry)
 	// Now is the clock; defaults to time.Now.
 	Now func() time.Time
+	// OobeCompleted reports whether the Out-of-Box Experience is done.
+	OobeCompleted func() (bool, error)
+	// ProcessRunning reports whether any of the named processes is running.
+	ProcessRunning func(names []string) (bool, error)
+	// ProcessInteractive reports whether the process runs on an interactive
+	// window station (WinSta0).
+	ProcessInteractive func() bool
+	// ActiveUserSID returns the SID of the active interactive user, or "".
+	ActiveUserSID func() string
 }
 
 // Session is the Go port of PSADT's DeploymentSession.
@@ -81,9 +99,10 @@ type Session struct {
 	strings *strtab.Table
 	env     *EnvironmentTable
 
-	installName  string
-	installTitle string
-	deployMode   DeployMode // resolved (never Auto)
+	installName   string
+	installTitle  string
+	cultureSource string     // e.g. "[en-GB] via active user's display language"
+	deployMode    DeployMode // resolved (never Auto)
 	installPhase string
 	exitCode     int
 	closed       bool
@@ -93,6 +112,13 @@ type Session struct {
 	logWriter      *logging.Writer
 	defaultLogName string // contains %s discriminator slot
 	defers         *deferral.Store
+
+	// compressLogDir is the temporary log-capture folder used when
+	// Toolkit.CompressLogs is set; Close zips it into the configured LogPath.
+	compressLogDir string
+	// finalLogDir is the configured log destination (zip target when
+	// compressing, the live log folder otherwise).
+	finalLogDir string
 
 	// ExitWithMsiCodes mirrors the zero-config MSI setting: on success the
 	// session normalizes the exit code to 0/3010.
@@ -131,7 +157,21 @@ func Open(ctx context.Context, opts Options, deps Deps) (*Session, error) {
 	cfg.ExpandPaths()
 	s.cfg = cfg
 
-	culture := firstNonEmpty(opts.LanguageOverride, cfg.UI.LanguageOverride, deps.Culture())
+	// Language resolution: an explicit override wins; otherwise, when running
+	// in session 0 (SYSTEM/service context), prefer the active interactive
+	// user's Windows display language over the process culture (PSADT
+	// Get-ADTStringLanguage parity).
+	activeUserCulture := ""
+	if sessID, err := deps.WTS.ProcessSessionID(); err == nil && sessID == 0 {
+		activeUserCulture = userUICulture(deps.Registry, deps.ActiveUserSID())
+	}
+	culture, cultureSource := firstNonEmptyWithSource([][2]string{
+		{opts.LanguageOverride, "session LanguageOverride"},
+		{cfg.UI.LanguageOverride, "config UI.LanguageOverride"},
+		{activeUserCulture, "active user's display language"},
+		{deps.Culture(), "process UI culture"},
+	})
+	s.cultureSource = fmt.Sprintf("[%s] via %s", culture, cultureSource)
 	tbl, err := strtab.Load(culture, opts.StringsOverlayPath)
 	if err != nil {
 		return nil, err
@@ -167,7 +207,6 @@ func Open(ctx context.Context, opts Options, deps Deps) (*Session, error) {
 	}
 
 	s.composeNames()
-	s.resolveDeployMode()
 
 	// Deferral store, keyed like PSADT: <RegPath>\PSAppDeployToolkit\DeferHistory\<InstallName>.
 	regPath := cfg.Toolkit.RegPath
@@ -183,6 +222,9 @@ func Open(ctx context.Context, opts Options, deps Deps) (*Session, error) {
 	if err := s.initLogging(); err != nil {
 		return nil, err
 	}
+	// Resolve after logging is up so each detection decision is logged live,
+	// like DeploymentSession's SetDeploymentProperties.
+	s.resolveDeployMode()
 	s.writeOpeningEntries()
 	return s, nil
 }
@@ -202,6 +244,18 @@ func applyDepDefaults(d *Deps) {
 	}
 	if d.Now == nil {
 		d.Now = time.Now
+	}
+	if d.OobeCompleted == nil {
+		d.OobeCompleted = defaultOobeCompleted
+	}
+	if d.ProcessRunning == nil {
+		d.ProcessRunning = defaultProcessRunning
+	}
+	if d.ProcessInteractive == nil {
+		d.ProcessInteractive = defaultProcessInteractive
+	}
+	if d.ActiveUserSID == nil {
+		d.ActiveUserSID = defaultActiveUserSID
 	}
 }
 
@@ -243,25 +297,50 @@ func (s *Session) composeNames() {
 		fmt.Sprintf("%s_%%s_%s%s.log", s.installName, o.DeploymentType, userSuffix), "")
 }
 
-// resolveDeployMode ports the Auto-mode resolution: Interactive when an
-// active interactive user session exists, Silent otherwise.
+// resolveDeployMode resolves the effective deploy mode. Explicit modes pass
+// through; Auto runs the PSADT detection chain (see resolveAutoDeployMode).
 func (s *Session) resolveDeployMode() {
 	if s.opts.DeployMode != DeployModeAuto {
 		s.deployMode = s.opts.DeployMode
 		return
 	}
-	users, err := s.deps.WTS.LoggedOnUsers()
-	if err != nil || len(users) == 0 {
-		s.deployMode = DeployModeSilent
-		return
+	probes := deployModeProbes{
+		oobeComplete: s.deps.OobeCompleted,
+		espUserSetupActive: func() (bool, error) {
+			running, err := s.deps.ProcessRunning([]string{"wwahost"})
+			if err != nil || !running {
+				return false, err
+			}
+			return espFirstSyncPending(s.deps.Registry, s.deps.ActiveUserSID())
+		},
+		sessionZero: func() bool {
+			id, err := s.deps.WTS.ProcessSessionID()
+			return err == nil && id == 0
+		},
+		processInteractive: s.deps.ProcessInteractive,
+		activeUserPresent: func() bool {
+			users, err := s.deps.WTS.LoggedOnUsers()
+			if err != nil {
+				return false
+			}
+			for _, u := range users {
+				if u.IsActive {
+					return true
+				}
+			}
+			return false
+		},
+		processesToCloseRunning: func() (bool, error) {
+			names := make([]string, len(s.opts.AppProcessesToClose))
+			for i, p := range s.opts.AppProcessesToClose {
+				names[i] = p.Name
+			}
+			return s.deps.ProcessRunning(names)
+		},
 	}
-	for _, u := range users {
-		if u.IsActive {
-			s.deployMode = DeployModeInteractive
-			return
-		}
-	}
-	s.deployMode = DeployModeSilent
+	s.deployMode = resolveAutoDeployMode(s.opts, probes, func(msg string) {
+		s.WriteLog(msg, logging.SeverityInfo, "", "Initialization")
+	})
 }
 
 func (s *Session) initLogging() error {
@@ -277,6 +356,25 @@ func (s *Session) initLogging() error {
 		logDir = filepath.Join(logDir, s.opts.AppVendor, s.opts.AppName, s.opts.AppVersion)
 	case s.cfg.Toolkit.LogToSubfolder:
 		logDir = filepath.Join(logDir, s.installName)
+	}
+	s.finalLogDir = logDir
+
+	// CompressLogs parity (DeploymentSession.cs): write logs to a temp capture
+	// folder during the session; Close zips them into the configured LogPath.
+	if s.cfg.Toolkit.CompressLogs {
+		tempPath := s.cfg.Toolkit.TempPath
+		if !s.isAdmin {
+			tempPath = s.cfg.Toolkit.TempPathNoAdminRights
+		}
+		capture := filepath.Join(
+			tempPath,
+			fmt.Sprintf("%s_%s", s.installName, s.opts.DeploymentType),
+		)
+		if err := os.RemoveAll(capture); err != nil {
+			return fmt.Errorf("session: purging log capture folder %s: %w", capture, err)
+		}
+		s.compressLogDir = capture
+		logDir = capture
 	}
 	logName := s.opts.LogName
 	if strings.TrimSpace(logName) == "" {
@@ -315,6 +413,12 @@ func (s *Session) writeOpeningEntries() {
 		s.installTitle,
 		s.isAdmin,
 	), logging.SeverityInfo, "", "")
+	s.WriteLog(
+		"The following locale was used to import UI messages: "+s.cultureSource+".",
+		logging.SeverityInfo,
+		"",
+		"",
+	)
 }
 
 // NewLogFileName ports DeploymentSession.NewLogFileName: the default log
@@ -526,8 +630,60 @@ func (s *Session) Close(ctx context.Context) int {
 	if s.logWriter != nil {
 		_ = s.logWriter.Close()
 	}
+	s.compressLogs()
 	return s.ExitCode()
 }
+
+// compressLogs zips the temporary log-capture folder into the configured log
+// path and prunes old archives to Toolkit.LogMaxHistory. Failures are logged
+// as warnings via LogEcho (the writer is closed) and never change the exit
+// code.
+func (s *Session) compressLogs() {
+	if s.compressLogDir == "" {
+		return
+	}
+	warn := func(msg string) {
+		if s.deps.LogEcho != nil {
+			s.deps.LogEcho(logging.Entry{
+				Time:     s.deps.Now(),
+				Message:  msg,
+				Severity: logging.SeverityWarning,
+				Source:   "CloseADTSession",
+			})
+		}
+	}
+	if err := os.MkdirAll(s.finalLogDir, 0o755); err != nil {
+		warn(fmt.Sprintf("Failed to create log archive folder: %v", err))
+		return
+	}
+	prefix := fmt.Sprintf("%s_%s_", s.installName, s.opts.DeploymentType)
+	dest := filepath.Join(s.finalLogDir, prefix+s.deps.Now().Format("20060102150405")+".zip")
+	if err := fsops.WriteZipArchive([]string{s.compressLogDir}, dest); err != nil {
+		warn(fmt.Sprintf("Failed to compress logs to [%s]: %v", dest, err))
+		return
+	}
+	if err := os.RemoveAll(s.compressLogDir); err != nil {
+		warn(fmt.Sprintf("Failed to remove log capture folder: %v", err))
+	}
+	// Prune archives beyond LogMaxHistory (timestamped names sort oldest-first).
+	archives, err := filepath.Glob(filepath.Join(s.finalLogDir, prefix+"*.zip"))
+	if err != nil || s.cfg.Toolkit.LogMaxHistory <= 0 {
+		return
+	}
+	sort.Strings(archives)
+	for len(archives) > s.cfg.Toolkit.LogMaxHistory {
+		if err := os.Remove(archives[0]); err != nil {
+			warn(fmt.Sprintf("Failed to prune log archive [%s]: %v", archives[0], err))
+			break
+		}
+		archives = archives[1:]
+	}
+}
+
+// CompressLogDir returns the temporary log-capture folder when
+// Toolkit.CompressLogs is active, or "" otherwise. MSI logging uses this so
+// msiexec logs are captured in the final archive.
+func (s *Session) CompressLogDir() string { return s.compressLogDir }
 
 // IsCallerAdmin reports whether the current process has administrative
 // rights (live check, independent of any open session).
