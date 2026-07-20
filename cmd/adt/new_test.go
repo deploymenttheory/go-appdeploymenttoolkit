@@ -45,4 +45,6 @@ func TestScaffoldWritesPackage(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, string(program), "go-appdeploymenttoolkit/adt")
 	assert.Contains(t, string(program), "Demo App")
+	// The scaffold defaults to requiring admin so a non-elevated run fails fast.
+	assert.Contains(t, string(program), "RequireAdmin: true")
 }

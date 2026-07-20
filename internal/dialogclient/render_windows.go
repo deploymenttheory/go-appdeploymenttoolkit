@@ -5,6 +5,8 @@ package dialogclient
 import (
 	"context"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -47,14 +49,43 @@ const (
 	modalHeight = 430
 )
 
+// webViewDataPath returns a writable user-data folder for the WebView2 runtime.
+// Left unset, go-webview2 defaults the folder to %AppData%\<exe>, whose
+// creation fails in an elevated/high-integrity process and leaves the
+// controller-created callback with a nil controller — crashing the render
+// thread. Pinning an explicit writable location avoids that and keeps the
+// folder out of the roaming profile.
+func webViewDataPath() string {
+	base := os.Getenv("LOCALAPPDATA")
+	if base == "" {
+		base = os.TempDir()
+	}
+	return filepath.Join(base, "go-appdeploymenttoolkit", "WebView2")
+}
+
+// processIsElevated reports whether the current process holds an elevated
+// (high-integrity) token. WebView2 controller creation fails in that context,
+// and the underlying library reacts by dereferencing a nil controller inside a
+// COM callback — a crash that unwinds across the cgo boundary and so cannot be
+// recovered. Elevated renders therefore use the native path, which is
+// integrity-safe. The production SYSTEM path is unaffected: it re-execs a
+// non-elevated client in the user session, which still renders WebView2.
+func processIsElevated() bool {
+	return windows.GetCurrentProcessToken().IsElevated()
+}
+
 // ShowModal renders a modal dialog and blocks until it is answered, times out
-// or is cancelled. DialogBox is drawn with a native MessageBox.
+// or is cancelled. DialogBox — and any dialog while elevated — is drawn with a
+// native MessageBox.
 func (r *Renderer) ShowModal(
 	ctx context.Context,
 	p ipc.ModalDialogPayload,
 ) (ipc.ModalDialogResult, error) {
 	if p.DialogType == ipc.DialogBox {
 		return renderDialogBox(p)
+	}
+	if processIsElevated() {
+		return renderModalNative(ctx, p)
 	}
 	return renderModalWebView(ctx, p)
 }
@@ -84,10 +115,26 @@ func renderModalWebView(
 	go func() {
 		runtime.LockOSThread()
 		defer runtime.UnlockOSThread()
+
+		// The success and fallback paths each send exactly once; sendOnce keeps
+		// a recovered panic (below) from a second send that would block on the
+		// cap-1 channel and leak this goroutine.
+		var sendOnce sync.Once
+		send := func(o outcome) { sendOnce.Do(func() { done <- o }) }
+		defer func() {
+			// Secondary guard for any recoverable panic on this render thread.
+			// (The elevated controller-creation crash is not recoverable and is
+			// avoided upstream by routing elevated renders to the native path.)
+			if recover() != nil {
+				send(outcome{fellBack: true})
+			}
+		}()
+
 		_ = windows.CoInitializeEx(0, windows.COINIT_APARTMENTTHREADED)
 
 		w := webview2.NewWithOptions(webview2.WebViewOptions{
 			AutoFocus: true,
+			DataPath:  webViewDataPath(),
 			WindowOptions: webview2.WindowOptions{
 				Title:  p.Base.Title,
 				Width:  modalWidth,
@@ -96,7 +143,7 @@ func renderModalWebView(
 			},
 		})
 		if w == nil {
-			done <- outcome{fellBack: true}
+			send(outcome{fellBack: true})
 			return
 		}
 		defer w.Destroy()
@@ -136,7 +183,7 @@ func renderModalWebView(
 
 		w.Run()
 		close(stop)
-		done <- outcome{res: result}
+		send(outcome{res: result})
 	}()
 
 	o := <-done
@@ -159,6 +206,13 @@ func (r *Renderer) ShowProgress(ctx context.Context, p ipc.ProgressPayload) erro
 	if r.progress != nil {
 		return r.updateProgressLocked(p)
 	}
+	if processIsElevated() {
+		// The WebView2 progress window would crash elevated (see
+		// processIsElevated). Progress is cosmetic and there is no native
+		// modeless equivalent, so skip it and let the deployment proceed;
+		// UpdateProgress/CloseProgress are already no-ops when none is showing.
+		return nil
+	}
 	view := BuildProgressView(p)
 	blob, err := view.JSON()
 	if err != nil {
@@ -170,10 +224,27 @@ func (r *Renderer) ShowProgress(ctx context.Context, p ipc.ProgressPayload) erro
 	go func() {
 		runtime.LockOSThread()
 		defer runtime.UnlockOSThread()
+
+		// Signal readiness and close done exactly once each, so a recovered
+		// WebView2 panic can report unavailability without a double-send or
+		// double-close.
+		var readyOnce, doneOnce sync.Once
+		signalReady := func(ok bool) { readyOnce.Do(func() { ready <- ok }) }
+		closeDone := func() { doneOnce.Do(func() { close(pw.done) }) }
+		defer closeDone()
+		defer func() {
+			// Progress is best-effort; on a WebView2 crash report it
+			// unavailable and let the deployment proceed without it.
+			if recover() != nil {
+				signalReady(false)
+			}
+		}()
+
 		_ = windows.CoInitializeEx(0, windows.COINIT_APARTMENTTHREADED)
 
 		w := webview2.NewWithOptions(webview2.WebViewOptions{
 			AutoFocus: true,
+			DataPath:  webViewDataPath(),
 			WindowOptions: webview2.WindowOptions{
 				Title:  p.Base.Title,
 				Width:  460,
@@ -182,8 +253,7 @@ func (r *Renderer) ShowProgress(ctx context.Context, p ipc.ProgressPayload) erro
 			},
 		})
 		if w == nil {
-			ready <- false
-			close(pw.done)
+			signalReady(false)
 			return
 		}
 		defer w.Destroy()
@@ -191,9 +261,8 @@ func (r *Renderer) ShowProgress(ctx context.Context, p ipc.ProgressPayload) erro
 		w.Init("window.__PROGRESS__ = " + blob + ";")
 		w.SetSize(460, 200, webview2.HintFixed)
 		w.SetHtml(assets.ProgressHTML())
-		ready <- true
+		signalReady(true)
 		w.Run()
-		close(pw.done)
 	}()
 
 	if !<-ready {

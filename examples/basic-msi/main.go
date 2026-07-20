@@ -13,6 +13,7 @@ package main
 import (
 	"context"
 	"errors"
+	"os"
 	"path/filepath"
 
 	"github.com/deploymenttheory/go-appdeploymenttoolkit/adt"
@@ -43,10 +44,13 @@ func main() {
 				return err
 			}
 
-			// Drop a support file into the install location.
+			// Drop a support file into the install location. CopyADTFile takes
+			// concrete paths — unlike config values it does not expand $env:
+			// tokens (matching PSADT, where the shell expands them first), so
+			// resolve environment variables in Go.
 			if err := adt.CopyADTFile(ctx, adt.CopyADTFileOptions{
 				Path:        []string{filepath.Join(s.DirSupportFiles(), "settings.json")},
-				Destination: `$env:ProgramData\Contoso\ExampleApp`,
+				Destination: filepath.Join(os.Getenv("ProgramData"), "Contoso", "ExampleApp"),
 			}); err != nil && !errors.Is(err, adt.ErrNotFound) {
 				return err
 			}

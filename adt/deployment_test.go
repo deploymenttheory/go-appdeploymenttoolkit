@@ -118,6 +118,35 @@ func TestRunSkipsNilPhases(t *testing.T) {
 	assert.Equal(t, 0, runDeployment(t, d))
 }
 
+func TestRunDefaultsScriptDirectoryToExecutableDir(t *testing.T) {
+	opts := testSessionOptions(t) // leaves ScriptDirectory empty
+	var gotDirFiles string
+	opts.Hooks.Opening = append(opts.Hooks.Opening, func(ctx context.Context, s *DeploymentSession) error {
+		gotDirFiles = s.DirFiles()
+		return nil
+	})
+	d := &Deployment{Session: opts}
+	require.Equal(t, 0, runDeployment(t, d))
+
+	exe, err := os.Executable()
+	require.NoError(t, err)
+	assert.Equal(t, filepath.Join(filepath.Dir(exe), "Files"), gotDirFiles,
+		"an unset ScriptDirectory should default DirFiles beside the executable")
+}
+
+func TestRunKeepsExplicitScriptDirectory(t *testing.T) {
+	opts := testSessionOptions(t)
+	opts.ScriptDirectory = t.TempDir()
+	var gotDirFiles string
+	opts.Hooks.Opening = append(opts.Hooks.Opening, func(ctx context.Context, s *DeploymentSession) error {
+		gotDirFiles = s.DirFiles()
+		return nil
+	})
+	d := &Deployment{Session: opts}
+	require.Equal(t, 0, runDeployment(t, d))
+	assert.Equal(t, filepath.Join(opts.ScriptDirectory, "Files"), gotDirFiles)
+}
+
 func TestSessionFacadeFunctions(t *testing.T) {
 	opts := testSessionOptions(t)
 	var hookOrder []string
