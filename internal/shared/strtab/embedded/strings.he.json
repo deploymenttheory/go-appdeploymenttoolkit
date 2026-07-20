@@ -1,0 +1,163 @@
+{
+  "CloseAppsPrompt": {
+    "CustomMessage": null,
+    "Fluent": {
+      "Subtitle": {
+        "Uninstall": "{Toolkit\\CompanyName} - הסרת אפליקציה",
+        "Install": "{Toolkit\\CompanyName} - התקנת אפליקציה",
+        "Repair": "{Toolkit\\CompanyName} - תיקון אפליקציות"
+      },
+      "ButtonLeftNoProcessesText": {
+        "Uninstall": "הסר את ההתקנה",
+        "Install": "לְהַתְקִין",
+        "Repair": "לְתַקֵן"
+      },
+      "ButtonLeftText": {
+        "Uninstall": "סגור אפליקציות והסר התקנה",
+        "Install": "סגור אפליקציות והתקן",
+        "Repair": "סגור אפליקציות ותיקון"
+      },
+      "ButtonRightText": "לִדחוֹת",
+      "DeferralsRemaining": "דחיות שנותרו",
+      "DialogMessage": {
+        "Uninstall": "אנא שמור את עבודתך לפני שתמשיך שכן היישומים הבאים ייסגרו אוטומטית.",
+        "Install": "אנא שמור את עבודתך לפני שתמשיך שכן היישומים הבאים ייסגרו אוטומטית.",
+        "Repair": "אנא שמור את עבודתך לפני שתמשיך שכן היישומים הבאים ייסגרו אוטומטית."
+      },
+      "AutomaticStartCountdown": "ספירה לאחור אוטומטית להתחלה",
+      "DeferralDeadline": "מועד אחרון לדחייה",
+      "DialogMessageNoProcesses": {
+        "Uninstall": "אנא בחר הסר כדי להמשיך בהסרת ההתקנה.",
+        "Install": "אנא בחר התקן כדי להמשיך בהתקנה.",
+        "Repair": "אנא בחר תיקון כדי להמשיך בתיקון."
+      }
+    },
+    "Classic": {
+      "ExpiryMessage": {
+        "Uninstall": "אתה יכול לבחור לדחות את הסרת ההתקנה עד לפקיעת הדחייה:",
+        "Install": "אתה יכול לבחור לדחות את ההתקנה עד לפקיעת הדחייה:",
+        "Repair": "אתה יכול לבחור לדחות את התיקון עד לפקיעת הדחייה:"
+      },
+      "ButtonDefer": "לִדחוֹת",
+      "WelcomeMessage": {
+        "Uninstall": "האפליקציה הבאה עומדת להיות מוסרת:",
+        "Install": "האפליקציה הבאה עומדת להיות מותקנת:",
+        "Repair": "האפליקציה הבאה עומדת לעבור תיקון:"
+      },
+      "CountdownClose": {
+        "Uninstall": "הערה: התוכניות ייסגרו אוטומטית ב:",
+        "Install": "הערה: התוכניות ייסגרו אוטומטית ב:",
+        "Repair": "הערה: התוכניות ייסגרו אוטומטית ב:"
+      },
+      "DeferralsRemaining": "דחיות שנותרו:",
+      "CountdownDefer": {
+        "Uninstall": "הסרת ההתקנה תימשך אוטומטית בעוד:",
+        "Install": "ההתקנה תמשיך אוטומטית ב:",
+        "Repair": "התיקון ימשיך אוטומטית בעוד:"
+      },
+      "CloseAppsMessage": {
+        "Uninstall": "יש לסגור את התוכניות הבאות לפני שניתן יהיה להמשיך בהסרת ההתקנה.\n\nנא שמור את עבודתך, סגור את התוכניות ולאחר מכן המשך. לחלופין, שמור את עבודתך ולחץ על \"סגור תוכניות\".",
+        "Install": "יש לסגור את התוכניות הבאות לפני שניתן להמשיך בהתקנה.\n\nנא שמור את עבודתך, סגור את התוכניות ולאחר מכן המשך. לחלופין, שמור את עבודתך ולחץ על \"סגור תוכניות\".",
+        "Repair": "יש לסגור את התוכניות הבאות לפני שניתן להמשיך בתיקון.\n\nנא שמור את עבודתך, סגור את התוכניות ולאחר מכן המשך. לחלופין, שמור את עבודתך ולחץ על \"סגור תוכניות\"."
+      },
+      "ButtonContinueTooltip": "בחר \"המשך\" רק לאחר סגירת האפליקציות המפורטות לעיל.",
+      "DeferralDeadline": "מוֹעֵד אַחֲרוֹן:",
+      "ButtonClose": "סגור תוכניות",
+      "ExpiryWarning": "לאחר שהדחיה פג, לא תהיה לך יותר אפשרות לדחות.",
+      "ButtonContinue": "לְהַמשִׁיך"
+    }
+  },
+  "RestartPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - הסרת אפליקציה",
+      "Install": "{Toolkit\\CompanyName} - התקנת אפליקציה",
+      "Repair": "{Toolkit\\CompanyName} - תיקון אפליקציות"
+    },
+    "MessageRestart": "המחשב שלך יופעל מחדש באופן אוטומטי בתום הספירה לאחור.",
+    "MessageTime": "נא לשמור את עבודתך ולהתחיל מחדש תוך הזמן המוקצב.",
+    "Message": {
+      "Uninstall": "כדי שההסרה תסתיים, עליך להפעיל מחדש את המחשב.",
+      "Install": "על מנת שההתקנה תסתיים, עליך להפעיל מחדש את המחשב.",
+      "Repair": "על מנת שהתיקון יסתיים, עליך להפעיל מחדש את המחשב."
+    },
+    "ButtonCancel": "ביטול",
+    "CustomMessage": null,
+    "ButtonRestartNow": "הפעל מחדש עכשיו",
+    "ButtonRestartLater": "לְצַמְצֵם",
+    "Title": "נדרשת הפעלה מחדש",
+    "TimeRemaining": "זמן שנותר:"
+  },
+  "DiskSpaceText": {
+    "Message": {
+      "Uninstall": "אין לך מספיק שטח דיסק כדי להשלים את הסרת ההתקנה של:\n{0}\n\nSpace נדרש: {1}MB\nSpace זמין: {2}MB\n\nאנא פנה מספיק שטח דיסק כדי להמשיך עם הסרת ההתקנה.",
+      "Install": "אין לך מספיק שטח דיסק כדי להשלים את ההתקנה של:\n{0}\n\nSpace נדרש: {1}MB\nSpace זמין: {2}MB\n\nאנא פנה מספיק שטח דיסק כדי להמשיך עם ההתקנה.",
+      "Repair": "אין לך מספיק שטח דיסק כדי להשלים את התיקון של:\n{0}\n\nSpace נדרש: {1}MB\nSpace זמין: {2}MB\n\nאנא פנה מספיק שטח דיסק כדי להמשיך עם את התיקון."
+    }
+  },
+  "ProgressPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - הסרת אפליקציה",
+      "Install": "{Toolkit\\CompanyName} - התקנת אפליקציה",
+      "Repair": "{Toolkit\\CompanyName} - תיקון אפליקציות"
+    },
+    "MessageDetail": {
+      "Uninstall": "חלון זה ייסגר אוטומטית עם השלמת הסרת ההתקנה.",
+      "Install": "חלון זה ייסגר אוטומטית עם השלמת ההתקנה.",
+      "Repair": "חלון זה ייסגר אוטומטית עם השלמת התיקון."
+    },
+    "Message": {
+      "Uninstall": "הסרת ההתקנה מתבצעת. אנא המתן…",
+      "Install": "התקנה בעיצומה. אנא המתן…",
+      "Repair": "תיקון מתבצע. אנא המתן…"
+    }
+  },
+  "BlockExecutionText": {
+    "Message": {
+      "Uninstall": "הפעלת אפליקציה זו נחסמה באופן זמני כדי שניתן יהיה להשלים פעולת הסרת ההתקנה.",
+      "Install": "הפעלת אפליקציה זו נחסמה זמנית כדי שניתן יהיה להשלים פעולת התקנה.",
+      "Repair": "הפעלת אפליקציה זו נחסמה זמנית כדי שניתן יהיה להשלים פעולת תיקון."
+    },
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - הסרת אפליקציה",
+      "Install": "{Toolkit\\CompanyName} - התקנת אפליקציה",
+      "Repair": "{Toolkit\\CompanyName} - תיקון אפליקציות"
+    }
+  },
+  "InstallationPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - הסרת אפליקציה",
+      "Install": "{Toolkit\\CompanyName} - התקנת אפליקציה",
+      "Repair": "{Toolkit\\CompanyName} - תיקון אפליקציות"
+    }
+  },
+  "BalloonTip": {
+    "Error": {
+      "Uninstall": "הסרת ההתקנה נכשלה.",
+      "Install": "ההתקנה נכשלה.",
+      "Repair": "התיקון נכשל."
+    },
+    "Start": {
+      "Uninstall": "הסרת ההתקנה החלה.",
+      "Install": "ההתקנה החלה.",
+      "Repair": "התיקון החל."
+    },
+    "RestartRequired": {
+      "Uninstall": "הסרת ההתקנה הושלמה. נדרש אתחול מחדש.",
+      "Install": "ההתקנה הושלמה. נדרש אתחול מחדש.",
+      "Repair": "התיקון הושלם. נדרש אתחול מחדש."
+    },
+    "Complete": {
+      "Uninstall": "הסרת ההתקנה הושלמה.",
+      "Install": "ההתקנה הושלמה.",
+      "Repair": "התיקון הושלם."
+    },
+    "FastRetry": {
+      "Uninstall": "הסרת ההתקנה לא הושלמה.",
+      "Install": "ההתקנה לא הושלמה.",
+      "Repair": "התיקון לא הושלם."
+    }
+  },
+  "ListSelectionPrompt": {
+    "ListSelectionMessage": ":בחר פריט"
+  }
+}

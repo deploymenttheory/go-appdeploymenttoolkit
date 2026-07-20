@@ -1,0 +1,163 @@
+{
+  "CloseAppsPrompt": {
+    "CustomMessage": null,
+    "Fluent": {
+      "Subtitle": {
+        "Uninstall": "{Toolkit\\CompanyName} - Deinstallieren der Anwendung",
+        "Install": "{Toolkit\\CompanyName} - Installation der Anwendung",
+        "Repair": "{Toolkit\\CompanyName} - Reparatur der Anwendung"
+      },
+      "ButtonLeftNoProcessesText": {
+        "Uninstall": "Deinstallieren",
+        "Install": "Installieren",
+        "Repair": "Reparatur"
+      },
+      "ButtonLeftText": {
+        "Uninstall": "Schließen und Deinstallieren",
+        "Install": "Schließen und Installieren",
+        "Repair": "Schließen und Reparieren"
+      },
+      "ButtonRightText": "Verschieben",
+      "DeferralsRemaining": "Verbleibende Aufschiebungen",
+      "DialogMessage": {
+        "Uninstall": "Bitte speichern Sie Ihre Arbeit, bevor Sie fortfahren, da die folgenden Anwendungen automatisch geschlossen werden.",
+        "Install": "Bitte speichern Sie Ihre Arbeit, bevor Sie fortfahren, da die folgenden Anwendungen automatisch geschlossen werden.",
+        "Repair": "Bitte speichern Sie Ihre Arbeit, bevor Sie fortfahren, da die folgenden Anwendungen automatisch geschlossen werden."
+      },
+      "AutomaticStartCountdown": "Automatischer Start-Countdown",
+      "DeferralDeadline": "Aufschiebefrist",
+      "DialogMessageNoProcesses": {
+        "Uninstall": "Wählen Sie Deinstallieren aus, um mit der Deinstallation fortzufahren.",
+        "Install": "Wählen Sie Installieren aus, um mit der Installation fortzufahren.",
+        "Repair": "Wählen Sie Reparieren aus, um mit der Reparatur fortzufahren."
+      }
+    },
+    "Classic": {
+      "ExpiryMessage": {
+        "Uninstall": "Die Deinstallation kann bis zum Ablauf der Aufschiebefrist verschoben werden:",
+        "Install": "Die Installation kann bis zum Ablauf der Aufschiebefrist verschoben werden:",
+        "Repair": "Die Reparatur kann bis zum Ablauf der Aufschiebefrist verschoben werden:"
+      },
+      "ButtonDefer": "&Verschieben",
+      "WelcomeMessage": {
+        "Uninstall": "Die folgende Anwendung wird deinstalliert:",
+        "Install": "Die folgende Anwendung wird installiert:",
+        "Repair": "Die folgende Anwendung wird repariert:"
+      },
+      "CountdownClose": {
+        "Uninstall": "HINWEIS: Die Anwendungen werden automatisch geschlossen in:",
+        "Install": "HINWEIS: Die Anwendungen werden automatisch geschlossen in:",
+        "Repair": "HINWEIS: Die Anwendungen werden automatisch geschlossen in:"
+      },
+      "DeferralsRemaining": "Verbleibende Aufschiebungen:",
+      "CountdownDefer": {
+        "Uninstall": "Die Deinstallation wird automatisch fortgesetzt in:",
+        "Install": "Die Installation wird automatisch fortgesetzt in:",
+        "Repair": "Die Reparatur wird automatisch fortgesetzt in:"
+      },
+      "CloseAppsMessage": {
+        "Uninstall": "Die folgenden Anwendungen müssen geschlossen werden, bevor die Deinstallation fortgesetzt werden kann.\n\nBitte speichern Sie Ihre Arbeit, schließen Sie die Anwendungen und fahren dann fort. Alternativ können Sie Ihre Arbeit speichern und auf „Anwendungen schließen“ klicken.",
+        "Install": "Die folgenden Anwendungen müssen geschlossen werden, bevor die Installation fortgesetzt werden kann.\n\nBitte speichern Sie Ihre Arbeit, schließen Sie die Anwendungen und fahren dann fort. Alternativ können Sie Ihre Arbeit speichern und auf „Anwendungen schließen“ klicken.",
+        "Repair": "Die folgenden Anwendungen müssen geschlossen werden, bevor die Reparatur fortgesetzt werden kann.\n\nBitte speichern Sie Ihre Arbeit, schließen Sie die Anwendungen und fahren dann fort. Alternativ können Sie Ihre Arbeit speichern und auf „Anwendungen schließen“ klicken."
+      },
+      "ButtonContinueTooltip": "Wählen Sie erst „Weiter“, nachdem Sie die oben aufgeführten Anwendung(en) geschlossen haben.",
+      "DeferralDeadline": "Frist:",
+      "ButtonClose": "Anwendungen &schließen",
+      "ExpiryWarning": "Nach Ablauf der Aufschiebung haben Sie keine Möglichkeit mehr zu verschieben.",
+      "ButtonContinue": "&Weiter"
+    }
+  },
+  "RestartPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - Deinstallieren der Anwendung",
+      "Install": "{Toolkit\\CompanyName} - Installation der Anwendung",
+      "Repair": "{Toolkit\\CompanyName} - Reparatur der Anwendung"
+    },
+    "MessageRestart": "Ihr Computer wird am Ende des Countdowns automatisch neu gestartet.",
+    "MessageTime": "Bitte speichern Sie Ihre Arbeit und starten Sie innerhalb der vorgegebenen Zeit neu.",
+    "Message": {
+      "Uninstall": "Damit die Deinstallation abgeschlossen werden kann, müssen Sie Ihren Computer neu starten.",
+      "Install": "Damit die Installation abgeschlossen werden kann, müssen Sie Ihren Computer neu starten.",
+      "Repair": "Damit die Reparatur abgeschlossen werden kann, müssen Sie Ihren Computer neu starten."
+    },
+    "ButtonCancel": "Abbrechen",
+    "CustomMessage": null,
+    "ButtonRestartNow": "Jetzt neu starten",
+    "ButtonRestartLater": "Minimieren",
+    "Title": "Neustart erforderlich",
+    "TimeRemaining": "Restzeit:"
+  },
+  "DiskSpaceText": {
+    "Message": {
+      "Uninstall": "Der Speicherplatz reicht nicht aus, um die Deinstallation von:\n{0}\n\nErforderlicher Speicherplatz: {1} MB\nVerfügbarer Speicherplatz: {2} MB\n\nBitte geben Sie ausreichend Speicherplatz frei, um mit der Deinstallation fortzufahren.",
+      "Install": "Der Speicherplatz reicht nicht aus, um die Installation abzuschließen:\n{0}\n\nErforderlicher Speicherplatz: {1} MB\nVerfügbarer Speicherplatz: {2} MB\n\nBitte geben Sie genügend Speicherplatz frei, um mit der Installation fortzufahren.",
+      "Repair": "Der Speicherplatz reicht nicht aus, um die Reparatur von:\n{0}\n\nErforderlicher Speicherplatz: {1} MB\nVerfügbarer Speicherplatz: {2} MB\n\nBitte geben Sie ausreichend Speicherplatz frei, um mit der Reparatur fortzufahren."
+    }
+  },
+  "ProgressPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - Deinstallieren der Anwendung",
+      "Install": "{Toolkit\\CompanyName} - Installation der Anwendung",
+      "Repair": "{Toolkit\\CompanyName} - Reparatur der Anwendung"
+    },
+    "MessageDetail": {
+      "Uninstall": "Dieses Fenster wird automatisch geschlossen, wenn die Deinstallation abgeschlossen ist.",
+      "Install": "Dieses Fenster wird automatisch geschlossen, wenn die Installation abgeschlossen ist.",
+      "Repair": "Dieses Fenster wird automatisch geschlossen, wenn die Reparatur abgeschlossen ist."
+    },
+    "Message": {
+      "Uninstall": "Deinstallation wird ausgeführt. Bitte warten…",
+      "Install": "Installation wird ausgeführt. Bitte warten…",
+      "Repair": "Reparatur wird ausgeführt. Bitte warten…"
+    }
+  },
+  "BlockExecutionText": {
+    "Message": {
+      "Uninstall": "Das Starten dieser Anwendung wurde vorübergehend blockiert, damit ein Deinstallationsvorgang abgeschlossen werden kann.",
+      "Install": "Das Starten dieser Anwendung wurde vorübergehend blockiert, damit ein Installationsvorgang abgeschlossen werden kann.",
+      "Repair": "Das Starten dieser Anwendung wurde vorübergehend blockiert, damit ein Reparaturvorgang abgeschlossen werden kann."
+    },
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - Neuinstallieren der Anwendung",
+      "Install": "{Toolkit\\CompanyName} - Installation der Anwendung",
+      "Repair": "{Toolkit\\CompanyName} - Reparatur der Anwendung"
+    }
+  },
+  "InstallationPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - Deinstallieren der Anwendung",
+      "Install": "{Toolkit\\CompanyName} - Installation der Anwendung",
+      "Repair": "{Toolkit\\CompanyName} - Reparatur der Anwendung"
+    }
+  },
+  "BalloonTip": {
+    "Error": {
+      "Uninstall": "Deinstallation ist fehlgeschlagen.",
+      "Install": "Installation ist fehlgeschlagen.",
+      "Repair": "Reparatur ist fehlgeschlagen."
+    },
+    "Start": {
+      "Uninstall": "Deinstallation wurde gestartet.",
+      "Install": "Installation wurde gestartet.",
+      "Repair": "Reparatur wurde gestartet."
+    },
+    "RestartRequired": {
+      "Uninstall": "Deinstallation wurde abgeschlossen. Neustart erforderlich.",
+      "Install": "Installation wurde abgeschlossen. Neustart erforderlich.",
+      "Repair": "Reparatur wurde abgeschlossen. Neustart erforderlich."
+    },
+    "Complete": {
+      "Uninstall": "Deinstallation wurde abgeschlossen.",
+      "Install": "Installation wurde abgeschlossen.",
+      "Repair": "Reparatur wurde abgeschlossen."
+    },
+    "FastRetry": {
+      "Uninstall": "Deinstallation wurde nicht abgeschlossen.",
+      "Install": "Installation wurde nicht abgeschlossen.",
+      "Repair": "Reparatur wurde nicht abgeschlossen."
+    }
+  },
+  "ListSelectionPrompt": {
+    "ListSelectionMessage": "Element auswählen:"
+  }
+}

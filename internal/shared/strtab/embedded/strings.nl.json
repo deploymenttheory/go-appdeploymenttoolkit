@@ -1,0 +1,163 @@
+{
+  "CloseAppsPrompt": {
+    "CustomMessage": null,
+    "Fluent": {
+      "Subtitle": {
+        "Uninstall": "{Toolkit\\CompanyName} - App De-installatie",
+        "Install": "{Toolkit\\CompanyName} - App Installatie",
+        "Repair": "{Toolkit\\CompanyName} - App Reparatie"
+      },
+      "ButtonLeftNoProcessesText": {
+        "Uninstall": "De-installeren",
+        "Install": "Installeren",
+        "Repair": "Repareren"
+      },
+      "ButtonLeftText": {
+        "Uninstall": "Sluit Apps en De-installeer",
+        "Install": "Sluit Apps en Installeer",
+        "Repair": "Sluit Apps en Repareer"
+      },
+      "ButtonRightText": "Uitstellen",
+      "DeferralsRemaining": "Resterende uitstel",
+      "DialogMessage": {
+        "Uninstall": "Sla uw werk op voordat u verder gaat, omdat de volgende applicaties automatisch worden gesloten. Als u nog uitstel heeft, kunt u de de-installatie ook uitstellen.",
+        "Install": "Sla uw werk op voordat u verder gaat, omdat de volgende applicaties automatisch worden gesloten. Als u nog uitstel heeft, kunt u de installatie ook uitstellen.",
+        "Repair": "Sla uw werk op voordat u verder gaat, omdat de volgende applicaties automatisch worden gesloten. Als u nog uitstel heeft, kunt u de reparatie ook uitstellen."
+      },
+      "AutomaticStartCountdown": "Automatische start aftellen",
+      "DeferralDeadline": "Uitsteltermijn",
+      "DialogMessageNoProcesses": {
+        "Uninstall": "Selecteer De-installeren om door te gaan met de de-installatie.",
+        "Install": "Selecteer Installeren om door te gaan met de installatie.",
+        "Repair": "Selecteer Repareren om door te gaan met de reparatie."
+      }
+    },
+    "Classic": {
+      "ExpiryMessage": {
+        "Uninstall": "U kunt ervoor kiezen de de-installatie uit te stellen totdat het uitstel verloopt:",
+        "Install": "U kunt ervoor kiezen de installatie uit te stellen totdat het uitstel verloopt:",
+        "Repair": "U kunt ervoor kiezen de reparatie uit te stellen totdat het uitstel verloopt:"
+      },
+      "ButtonDefer": "&Verwijderen",
+      "WelcomeMessage": {
+        "Uninstall": "De volgende toepassing wordt gede-installeerd:",
+        "Install": "De volgende toepassing wordt geïnstalleerd:",
+        "Repair": "De volgende toepassing wordt gerepareerd:"
+      },
+      "CountdownClose": {
+        "Uninstall": "OPMERKING: De applicaties worden automatisch afgesloten na:",
+        "Install": "OPMERKING: De applicaties worden automatisch afgesloten na:",
+        "Repair": "OPMERKING: De applicaties worden automatisch afgesloten na:"
+      },
+      "DeferralsRemaining": "Uitstel keren beschikbaar:",
+      "CountdownDefer": {
+        "Uninstall": "De de-installatie wordt automatisch voortgezet na:",
+        "Install": "De installatie gaat automatisch verder na:",
+        "Repair": "De reparatie gaat automatisch verder na:"
+      },
+      "CloseAppsMessage": {
+        "Uninstall": "De volgende applicaties moeten worden afgesloten voordat de de-installatie kan worden uitgevoerd.\n\nSla uw werk op, sluit de applicaties af en ga dan verder. U kunt ook uw werk opslaan en op \"Applicaties sluiten\" klikken.",
+        "Install": "De volgende applicaties moeten worden afgesloten voordat de installatie kan worden uitgevoerd.\n\nSla uw werk op, sluit de applicaties af en ga dan verder. U kunt ook uw werk opslaan en op \"Applicaties sluiten\" klikken.",
+        "Repair": "De volgende applicaties moeten worden afgesloten voordat de reparatie kan worden uitgevoerd.\n\nSla uw werk op, sluit de applicaties af en ga dan verder. U kunt ook uw werk opslaan en op \"Applicaties sluiten\" klikken."
+      },
+      "ButtonContinueTooltip": "Selecteer alleen ‘Doorgaan’ na het sluiten van de bovengenoemde applicatie(s).",
+      "DeferralDeadline": "Termijn:",
+      "ButtonClose": "Sluit &Applicaties",
+      "ExpiryWarning": "Als het uitstel is verlopen, hebt u niet langer de mogelijkheid om uit te stellen.",
+      "ButtonContinue": "&Doorgaan"
+    }
+  },
+  "RestartPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - App De-installatie",
+      "Install": "{Toolkit\\CompanyName} - App Installatie",
+      "Repair": "{Toolkit\\CompanyName} - App Reparatie"
+    },
+    "MessageRestart": "Uw computer wordt automatisch opnieuw opgestart aan het einde van het aftellen.",
+    "MessageTime": "Sla uw werk op en start uw computer binnen de toegewezen tijd opnieuw op.",
+    "Message": {
+      "Uninstall": "Om de de-installatie te voltooien, moet u uw computer opnieuw opstarten.",
+      "Install": "Om de installatie te voltooien, moet u uw computer opnieuw opstarten.",
+      "Repair": "Om de reparatie te voltooien, moet u uw computer opnieuw opstarten."
+    },
+    "ButtonCancel": "Annuleren",
+    "CustomMessage": null,
+    "ButtonRestartNow": "Nu opnieuw opstarten",
+    "ButtonRestartLater": "Minimaliseren",
+    "Title": "Opnieuw opstarten vereist",
+    "TimeRemaining": "Resterende tijd:"
+  },
+  "DiskSpaceText": {
+    "Message": {
+      "Uninstall": "U hebt niet genoeg schijfruimte om de de-installatie te voltooien van:\n{0}\n\nAfgeronde ruimte: {1}MB\nBeschikbare ruimte: {2}MB\n\nMaak alstublieft voldoende schijfruimte vrij om door te gaan met de de-installatie.",
+      "Install": "U hebt niet genoeg schijfruimte om de installatie te voltooien van:\n{0}\n\nAfgeronde ruimte: {1}MB\nRuimte beschikbaar: {2}MB\n\nMaak voldoende schijfruimte vrij om door te gaan met de installatie.",
+      "Repair": "U hebt niet genoeg schijfruimte om de reparatie te voltooien van:\n{0}\n\nVerplichte ruimte: {1}MB\nBeschikbare ruimte: {2}MB\n\nMaak voldoende schijfruimte vrij om door te gaan met de reparatie."
+    }
+  },
+  "ProgressPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - App De-installatie",
+      "Install": "{Toolkit\\CompanyName} - App Installatie",
+      "Repair": "{Toolkit\\CompanyName} - App Reparatie"
+    },
+    "MessageDetail": {
+      "Uninstall": "Dit venster wordt automatisch gesloten als de de-installatie voltooid is.",
+      "Install": "Dit venster wordt automatisch gesloten als de installatie voltooid is.",
+      "Repair": "Dit venster wordt automatisch gesloten als de reparatie is voltooid."
+    },
+    "Message": {
+      "Uninstall": "De-installatie wordt uitgevoerd. Even geduld a.u.b…",
+      "Install": "Installatie wordt uitgevoerd. Even geduld a.u.b…",
+      "Repair": "Reparatie wordt uitgevoerd. Even geduld a.u.b…"
+    }
+  },
+  "BlockExecutionText": {
+    "Message": {
+      "Uninstall": "Het starten van deze applicatie is tijdelijk geblokkeerd zodat een de-installatie kan worden uitgevoerd.",
+      "Install": "Het starten van deze applicatie is tijdelijk geblokkeerd zodat een installatie kan worden uitgevoerd.",
+      "Repair": "Het starten van deze applicatie is tijdelijk geblokkeerd zodat een reparatie kan worden uitgevoerd."
+    },
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - App De-installatie",
+      "Install": "{Toolkit\\CompanyName} - App Installatie",
+      "Repair": "{Toolkit\\CompanyName} - App Reparatie"
+    }
+  },
+  "InstallationPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - App De-installatie",
+      "Install": "{Toolkit\\CompanyName} - App Installatie",
+      "Repair": "{Toolkit\\CompanyName} - App Reparatie"
+    }
+  },
+  "BalloonTip": {
+    "Error": {
+      "Uninstall": "De-installatie mislukt.",
+      "Install": "Installatie mislukt.",
+      "Repair": "Reparatie mislukt."
+    },
+    "Start": {
+      "Uninstall": "De-installatie gestart.",
+      "Install": "Installatie gestart.",
+      "Repair": "Reparatie gestart."
+    },
+    "RestartRequired": {
+      "Uninstall": "De-installatie voltooid. Opnieuw opstarten is vereist.",
+      "Install": "Installatie voltooid. Opnieuw opstarten is vereist.",
+      "Repair": "Reparatie voltooid. Opnieuw opstarten is vereist."
+    },
+    "Complete": {
+      "Uninstall": "De-installatie voltooid.",
+      "Install": "Installatie voltooid.",
+      "Repair": "Reparatie voltooid."
+    },
+    "FastRetry": {
+      "Uninstall": "De-installatie niet voltooid.",
+      "Install": "Installatie niet voltooid.",
+      "Repair": "Reparatie niet voltooid."
+    }
+  },
+  "ListSelectionPrompt": {
+    "ListSelectionMessage": "Selecteer een item:"
+  }
+}

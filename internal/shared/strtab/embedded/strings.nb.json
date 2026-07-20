@@ -1,0 +1,163 @@
+{
+  "CloseAppsPrompt": {
+    "CustomMessage": null,
+    "Fluent": {
+      "Subtitle": {
+        "Uninstall": "{Toolkit\\CompanyName} - Avinstallasjon av app",
+        "Install": "{Toolkit\\CompanyName} - Appinstallasjon",
+        "Repair": "{Toolkit\\CompanyName} - Appreparasjon"
+      },
+      "ButtonLeftNoProcessesText": {
+        "Uninstall": "Avinstaller",
+        "Install": "Installere",
+        "Repair": "Reparer"
+      },
+      "ButtonLeftText": {
+        "Uninstall": "Lukk apper og avinstaller",
+        "Install": "Lukk apper og installer",
+        "Repair": "Lukk apper og reparer"
+      },
+      "ButtonRightText": "Utsett",
+      "DeferralsRemaining": "Gjenværende utsettelser",
+      "DialogMessage": {
+        "Uninstall": "Lagre arbeidet ditt før du fortsetter, da følgende programmer vil bli lukket automatisk.",
+        "Install": "Lagre arbeidet ditt før du fortsetter, da følgende programmer vil bli lukket automatisk.",
+        "Repair": "Lagre arbeidet ditt før du fortsetter, da følgende programmer vil bli lukket automatisk."
+      },
+      "AutomaticStartCountdown": "Automatisk nedtelling til start",
+      "DeferralDeadline": "Frist for utsettelse",
+      "DialogMessageNoProcesses": {
+        "Uninstall": "Velg Avinstaller for å fortsette med avinstallasjonen.",
+        "Install": "Velg Install for å fortsette med installasjonen.",
+        "Repair": "Velg Repair for å fortsette med reparasjonen."
+      }
+    },
+    "Classic": {
+      "ExpiryMessage": {
+        "Uninstall": "Du kan velge å utsette avinstallasjonen til utsettelsen utløper:",
+        "Install": "Du kan velge å utsette installasjonen til utsettelsen utløper:",
+        "Repair": "Du kan velge å utsette reparasjonen til utsettelsen utløper:"
+      },
+      "ButtonDefer": "&Utsette",
+      "WelcomeMessage": {
+        "Uninstall": "Følgende applikasjon er i ferd med å bli avinstallert:",
+        "Install": "Følgende program er i ferd med å bli installert:",
+        "Repair": "Følgende applikasjon er i ferd med å bli reparert:"
+      },
+      "CountdownClose": {
+        "Uninstall": "MERK: Programmet/programmene lukkes automatisk om:",
+        "Install": "MERK: Programmet/programmene lukkes automatisk om:",
+        "Repair": "MERK: Programmet/programmene lukkes automatisk om:"
+      },
+      "DeferralsRemaining": "Gjenværende utsettelser:",
+      "CountdownDefer": {
+        "Uninstall": "Avinstallasjonen vil automatisk fortsette om:",
+        "Install": "Installasjonen fortsetter automatisk om:",
+        "Repair": "Reparasjonen vil automatisk fortsette i:"
+      },
+      "CloseAppsMessage": {
+        "Uninstall": "Følgende programmer må lukkes før avinstallasjonen kan fortsette.n\n\nLagre arbeidet, lukk programmene, og fortsett deretter. Alternativt kan du lagre arbeidet og klikke på «Lukk programmer».",
+        "Install": "Følgende programmer må lukkes før installasjonen kan fortsette.»\n\nLagre arbeidet ditt, lukk programmene og fortsett deretter. Alternativt kan du lagre arbeidet og klikke på «Lukk programmer».",
+        "Repair": "Følgende programmer må lukkes før reparasjonen kan fortsette.n\n\nLagre arbeidet, lukk programmene, og fortsett deretter. Alternativt kan du lagre arbeidet og klikke på «Lukk programmer»."
+      },
+      "ButtonContinueTooltip": "Velg bare «Fortsett» etter at du har lukket ovennevnte program(mer).",
+      "DeferralDeadline": "Frist:",
+      "ButtonClose": "Lukk &Programmer",
+      "ExpiryWarning": "Når utsettelsen har utløpt, har du ikke lenger muligheten til å utsette.",
+      "ButtonContinue": "&Fortsett"
+    }
+  },
+  "RestartPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - Avinstallasjon av app",
+      "Install": "{Toolkit\\CompanyName} - Appinstallasjon",
+      "Repair": "{Toolkit\\CompanyName} - Appreparasjon"
+    },
+    "MessageRestart": "Datamaskinen startes automatisk på nytt når nedtellingen er over.",
+    "MessageTime": "Lagre arbeidet ditt og start på nytt innen den tilmålte tiden.",
+    "Message": {
+      "Uninstall": "Du må starte datamaskinen på nytt for at avinstallasjonen skal fullføres.",
+      "Install": "For at installasjonen skal fullføres, må du starte datamaskinen på nytt.",
+      "Repair": "For at reparasjonen skal fullføres, må du starte datamaskinen på nytt."
+    },
+    "ButtonCancel": "Avbryt",
+    "CustomMessage": null,
+    "ButtonRestartNow": "Start på nytt nå",
+    "ButtonRestartLater": "Minimer",
+    "Title": "Omstart påkrevd",
+    "TimeRemaining": "Gjenværende tid:"
+  },
+  "DiskSpaceText": {
+    "Message": {
+      "Uninstall": "Du har ikke nok diskplass til å fullføre avinstalleringen av:\n{0}\n\nPlass kreves: {1}MB\nTilgjengelig plass: {2}MB\n\nFrigjør nok diskplass for å kunne fortsette med avinstallasjonen.",
+      "Install": "Du har ikke nok diskplass til å fullføre installasjonen av:\n{0}\n\nPlass kreves: {1}MB\nTilgjengelig plass: {2}MB\n\nFrigjør nok diskplass for å kunne fortsette med installasjonen.",
+      "Repair": "Du har ikke nok diskplass til å fullføre reparasjonen av:\n{0}\n\nPlass kreves: {1}MB\nTilgjengelig plass: {2}MB\n\nFrigjør nok diskplass for å kunne fortsette med reparasjonen."
+    }
+  },
+  "ProgressPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - Avinstallasjon av app",
+      "Install": "{Toolkit\\CompanyName} - Appinstallasjon",
+      "Repair": "{Toolkit\\CompanyName} - Appreparasjon"
+    },
+    "MessageDetail": {
+      "Uninstall": "Dette vinduet lukkes automatisk når avinstallasjonen er fullført.",
+      "Install": "Dette vinduet lukkes automatisk når installasjonen er fullført.",
+      "Repair": "Dette vinduet lukkes automatisk når reparasjonen er fullført."
+    },
+    "Message": {
+      "Uninstall": "Avinstalleringen pågår. Vennligst vent…",
+      "Install": "Installasjon pågår. Vennligst vent …",
+      "Repair": "Reparasjon pågår. Vennligst vent…"
+    }
+  },
+  "BlockExecutionText": {
+    "Message": {
+      "Uninstall": "Start av dette programmet har blitt midlertidig blokkert slik at en avinstallasjonsoperasjon kan fullføres.",
+      "Install": "Start av denne applikasjonen er midlertidig blokkert slik at en installasjonsoperasjon kan fullføres.",
+      "Repair": "Start av denne applikasjonen er midlertidig blokkert slik at en reparasjonsoperasjon kan fullføres."
+    },
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - Avinstallasjon av app",
+      "Install": "{Toolkit\\CompanyName} - Appinstallasjon",
+      "Repair": "{Toolkit\\CompanyName} - Appreparasjon"
+    }
+  },
+  "InstallationPrompt": {
+    "Subtitle": {
+      "Uninstall": "{Toolkit\\CompanyName} - Avinstallasjon av app",
+      "Install": "{Toolkit\\CompanyName} - Appinstallasjon",
+      "Repair": "{Toolkit\\CompanyName} - Appreparasjon"
+    }
+  },
+  "BalloonTip": {
+    "Error": {
+      "Uninstall": "Avinstalleringen mislyktes.",
+      "Install": "Installasjon mislyktes.",
+      "Repair": "Reparasjon mislyktes."
+    },
+    "Start": {
+      "Uninstall": "Avinstalleringen er startet.",
+      "Install": "Installasjon startet.",
+      "Repair": "Reparasjon startet."
+    },
+    "RestartRequired": {
+      "Uninstall": "Avinstalleringen er fullført. En omstart er påkrevd.",
+      "Install": "Installasjonen er fullført. En omstart er nødvendig.",
+      "Repair": "Reparasjon fullført. En omstart er påkrevd."
+    },
+    "Complete": {
+      "Uninstall": "Avinstalleringen er fullført.",
+      "Install": "Installasjon fullført.",
+      "Repair": "Reparasjon fullført."
+    },
+    "FastRetry": {
+      "Uninstall": "Avinstalleringen er ikke fullført.",
+      "Install": "Installasjon ikke fullført.",
+      "Repair": "Reparasjon ikke fullført."
+    }
+  },
+  "ListSelectionPrompt": {
+    "ListSelectionMessage": "Velg et element:"
+  }
+}
