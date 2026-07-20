@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/deploymenttheory/go-appdeploymenttoolkit/adt"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/manifest"
 )
 
 func newRunCommand() *cobra.Command {
@@ -53,10 +54,15 @@ type detectionFlags struct {
 	noMsiProcessList                            bool
 }
 
-// runPackage builds a Deployment for the package directory. When Files/ holds
-// exactly one usable MSI, it wires the zero-config install/uninstall/repair
-// phases; otherwise it errors, directing the user to a compiled Go deployment.
+// runPackage builds a Deployment for the package directory. A deployment
+// manifest (deployment.yaml) takes precedence; otherwise, when Files/ holds
+// exactly one usable MSI (or a WIM containing one), the zero-config
+// install/uninstall/repair phases are wired; otherwise it errors, directing
+// the user to a manifest or a compiled Go deployment.
 func runPackage(ctx context.Context, dir, deploymentType, deployMode string, suppressReboot bool, detection detectionFlags) error {
+	if manifestPath, pkgDir, err := resolveManifestArg(dir); err == nil {
+		return runManifest(ctx, manifestPath, pkgDir, deploymentType, deployMode, suppressReboot, detection)
+	}
 	filesDir := filepath.Join(dir, "Files")
 	msi, err := discoverZeroConfigMSI(filesDir)
 	var wimMount string
@@ -200,6 +206,36 @@ func discoverPatches(filesDir string) []string {
 	}
 	sort.Strings(patches)
 	return patches
+}
+
+// runManifest loads, validates and compiles a deployment manifest, then runs
+// it with the CLI flags overriding the manifest's session intent.
+func runManifest(
+	ctx context.Context,
+	manifestPath, pkgDir, deploymentType, deployMode string,
+	suppressReboot bool,
+	detection detectionFlags,
+) error {
+	dep, issues, err := manifest.LoadAndCompile(manifestPath, manifest.CompileOptions{PackageDir: pkgDir})
+	if err != nil {
+		printHumanReport(os.Stderr, manifest.NewReport(manifestPath, issues))
+		return err
+	}
+	if detection.noOobe {
+		dep.Session.NoOobeDetection = true
+	}
+	if detection.noProcess {
+		dep.Session.NoProcessDetection = true
+	}
+	if detection.noSession {
+		dep.Session.NoSessionDetection = true
+	}
+	if detection.interactivity {
+		dep.Session.ProcessInteractivityDetection = true
+	}
+	dep.Args = buildRunArgs(deploymentType, deployMode, suppressReboot)
+	dep.Run(ctx)
+	return nil // Deployment.Run exits the process itself
 }
 
 func buildRunArgs(deploymentType, deployMode string, suppressReboot bool) []string {

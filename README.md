@@ -73,18 +73,60 @@ GOOS=windows go build -o Invoke-AppDeployToolkit.exe
 Invoke-AppDeployToolkit.exe -DeploymentType Install -DeployMode Interactive
 ```
 
+## Deployment manifests (YAML workflows)
+
+Deployments can be defined as data instead of code: a `deployment.yaml` at the
+package root composes steps from a typed catalog and is validated and executed
+by the `adt` binary — locally or in a pipeline (validation is fully portable,
+so CI can gate manifests without a Windows runner):
+
+```yaml
+apiVersion: v0.1.0-alpha
+kind: Deployment
+session:
+  appVendor: Contoso
+  appName: Widget
+  appVersion: "1.2.3"
+  closeProcesses: [{name: widget}]
+phases:
+  preInstall:
+    - uses: dialog.welcome
+      with: {allowDefer: true, deferTimes: 3, promptToSave: true}
+  install:
+    - uses: msi.install
+      with: {path: Widget.msi, transforms: [Widget.mst]}
+  postInstall:
+    - uses: registry.set
+      with: {key: 'HKLM:\SOFTWARE\Contoso\Widget', name: Installed, value: 1, type: dword}
+```
+
+- `adt validate <package-dir>` — layered validation (strict schema with
+  did-you-mean suggestions, cross-field semantics, `Files/` existence,
+  `--target` platform support) with gcc-style positions and `--json` output.
+- `adt steps` — the step catalog (`--json` for tooling).
+- `adt schema` — the format's JSON Schema (draft 2020-12), generated from the
+  registry and checked in as `manifest/winadt.schema-v0.1.0-alpha.json`
+  (semver-versioned artifact); emit it beside a package and reference it with
+  a `yaml-language-server` modeline for editor autocomplete.
+- The `manifest` package exposes the schema, catalog, validator and compiler
+  programmatically.
+
 ## CLI
 
 The `adt` command is the analogue of `Invoke-AppDeployToolkit.exe`:
 
-- `adt run <package-dir>` — run a deployment package. When `Files/` holds a
-  single MSI, it drives the **zero-config** install/uninstall/repair flow with
-  no author code.
+- `adt run <package-dir>` — run a deployment package: a `deployment.yaml`
+  manifest when present, else the **zero-config** MSI flow (single MSI under
+  `Files/`, with MST/MSP auto-discovery) with no author code.
+- `adt validate <package-dir>` / `adt steps` — manifest validation and the
+  step catalog (see above).
 - `adt new <dir> --name MyApp` — scaffold a package (`Files/`, `SupportFiles/`,
-  `Config/`, `Strings/`, `Assets/`, a `go.mod` and a deployment `main.go`).
+  `Config/`, `Strings/`, `Assets/`, a starter `deployment.yaml`, a `go.mod`
+  and a deployment `main.go`).
 
 ```sh
 go install github.com/deploymenttheory/go-appdeploymenttoolkit/cmd/adt@latest
+adt validate ./MyPackage
 adt run ./MyPackage --deployment-type Install --deploy-mode Silent
 ```
 

@@ -1,0 +1,83 @@
+apiVersion: v0.1.0-alpha
+kind: Deployment
+session:
+  appVendor: Contoso
+  appName: Widget
+  appVersion: "1.2.3"
+  appArch: x64
+  appLang: EN
+  appRevision: "01"
+  deployMode: auto
+  closeProcesses:
+    - name: widget
+      description: Widget Client
+  successExitCodes: [0]
+  rebootExitCodes: [1641, 3010]
+  requireAdmin: true
+  noOobeDetection: false
+phases:
+  preInstall:
+    - uses: dialog.welcome
+      name: Close apps and offer deferral
+      with:
+        closeProcesses: [{name: widget}]
+        allowDefer: true
+        deferTimes: 3
+        deferDeadline: "2026-08-01T17:00:00Z"
+        deferRunInterval: "4h"
+        promptToSave: true
+        blockExecution: true
+    - uses: dialog.progress
+      with: {statusMessage: "Installing Widget..."}
+  install:
+    - uses: msi.install
+      with:
+        path: Widget.msi
+        transforms: [Widget.mst]
+        secureArguments: true
+    - uses: msi.patch
+      with: {path: Widget-hotfix.msp}
+      continueOnError: true
+    - uses: process.start
+      with:
+        filePath: setup-helper.exe
+        arguments: /quiet
+        windowStyle: hidden
+        priorityClass: belowNormal
+        timeout: "10m"
+        timeoutAction: continue
+  postInstall:
+    - uses: registry.set
+      with:
+        key: 'HKLM:\SOFTWARE\Contoso\Widget'
+        name: Installed
+        value: 1
+        type: dword
+    - uses: shortcut.create
+      with:
+        path: 'C:\Users\Public\Desktop\Widget.lnk'
+        targetPath: 'C:\Program Files\Widget\widget.exe'
+        windowStyle: normal
+    - uses: env.set
+      with: {variable: WIDGET_HOME, value: 'C:\Program Files\Widget', target: machine}
+    - uses: dialog.progressClose
+  preUninstall:
+    - uses: dialog.welcome
+      with:
+        closeProcesses: [{name: widget}]
+  uninstall:
+    - uses: msi.uninstall
+      with: {path: "{26923b43-4d38-484f-9b9e-de460746276c}"}
+  postUninstall:
+    - uses: folder.remove
+      with: {path: 'C:\ProgramData\Widget', disableRecursion: false}
+    - uses: shortcut.removeDesktop
+      with: {name: Widget}
+  preRepair:
+    - uses: dialog.progress
+      with: {statusMessage: "Repairing Widget..."}
+  repair:
+    - uses: msi.repair
+      with: {path: Widget.msi}
+  postRepair:
+    - uses: dialog.progressClose

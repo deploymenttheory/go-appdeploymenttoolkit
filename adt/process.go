@@ -380,11 +380,11 @@ func buildProcessPlan(s *DeploymentSession, opts *StartADTProcessOptions) (*proc
 	if !ok {
 		return nil, fmt.Errorf("adt: PriorityClass %q: %w", opts.PriorityClass, ErrInvalidOption)
 	}
-	timeoutContinue, ok := parseTimeoutAction(opts.TimeoutAction)
+	timeoutContinue, ok := procmgmt.ParseTimeoutAction(opts.TimeoutAction)
 	if !ok {
 		return nil, fmt.Errorf("adt: TimeoutAction %q: %w", opts.TimeoutAction, ErrInvalidOption)
 	}
-	if !validStreamEncoding(opts.StreamEncoding) {
+	if !procmgmt.ValidStreamEncoding(opts.StreamEncoding) {
 		return nil, fmt.Errorf("adt: StreamEncoding %q: %w", opts.StreamEncoding, ErrInvalidOption)
 	}
 	if opts.ExpandEnvironmentVariables {
@@ -448,29 +448,6 @@ func buildProcessPlan(s *DeploymentSession, opts *StartADTProcessOptions) (*proc
 		noStreamLogging: opts.NoStreamLogging,
 		timeoutContinue: timeoutContinue,
 	}, nil
-}
-
-// parseTimeoutAction parses -TimeoutAction: "" or "Error" (terminate-and-
-// error, the default) vs "Continue" (suppress the timeout error).
-func parseTimeoutAction(s string) (continueOnTimeout, ok bool) {
-	switch strings.ToLower(s) {
-	case "", "error":
-		return false, true
-	case "continue":
-		return true, true
-	default:
-		return false, false
-	}
-}
-
-// validStreamEncoding reports whether the StreamEncoding value is supported.
-func validStreamEncoding(s string) bool {
-	switch strings.ToLower(s) {
-	case "", "utf-16le", "oem":
-		return true
-	default:
-		return false
-	}
 }
 
 // runProcessPlan performs the MSI mutex gate, the launch and the exit-code
