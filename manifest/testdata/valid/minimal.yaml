@@ -1,0 +1,11 @@
+apiVersion: v0.1.0-alpha
+kind: Deployment
+session:
+  appVendor: Contoso
+  appName: Minimal
+  appVersion: "1.0.0"
+phases:
+  install:
+    - uses: msi.install
+      with:
+        path: Minimal.msi

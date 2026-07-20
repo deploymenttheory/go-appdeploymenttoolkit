@@ -1,0 +1,3481 @@
+{
+  "$defs": {
+    "duration": {
+      "description": "Go duration string, e.g. \"90s\", \"5m\", \"1h30m\". Bare numbers are rejected.",
+      "pattern": "^-?([0-9]+(\\.[0-9]+)?(ns|us|µs|ms|s|m|h))+$",
+      "type": "string"
+    },
+    "processList": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "description": "friendly name shown in dialogs",
+            "type": "string"
+          },
+          "name": {
+            "description": "process name without extension",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "step": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "activeSetup.set"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Create an Active Setup entry that runs per user at logon",
+                "properties": {
+                  "arguments": {
+                    "description": "stub arguments",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "description": {
+                    "description": "entry description",
+                    "type": "string"
+                  },
+                  "disableActiveSetup": {
+                    "description": "create the entry disabled",
+                    "type": "boolean"
+                  },
+                  "executionPolicy": {
+                    "description": "PowerShell execution policy for .ps1 stubs",
+                    "type": "string"
+                  },
+                  "key": {
+                    "description": "Installed Components key name (default derived)",
+                    "type": "string"
+                  },
+                  "locale": {
+                    "description": "entry locale",
+                    "type": "string"
+                  },
+                  "noExecuteForCurrentUser": {
+                    "description": "skip immediate execution for the current user",
+                    "type": "boolean"
+                  },
+                  "purge": {
+                    "description": "remove the entry (and per-user state) instead of creating it",
+                    "type": "boolean"
+                  },
+                  "stubExePath": {
+                    "description": "the stub executed per user (.exe/.vbs/.cmd/.bat/.ps1/.js)",
+                    "type": "string"
+                  },
+                  "version": {
+                    "description": "Active Setup version stamp",
+                    "type": "string"
+                  },
+                  "wow6432Node": {
+                    "description": "write the 32-bit registry view",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "stubExePath"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "app.uninstall"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Uninstall installed applications by name or product code",
+                "properties": {
+                  "additionalArguments": {
+                    "description": "append to the uninstall arguments",
+                    "type": "string"
+                  },
+                  "applicationType": {
+                    "description": "restrict to MSI or EXE applications (default all) (matched case-insensitively by adt)",
+                    "enum": [
+                      "all",
+                      "msi",
+                      "exe"
+                    ],
+                    "type": "string"
+                  },
+                  "arguments": {
+                    "description": "override the uninstall arguments",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "display-name filters",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "nameMatch": {
+                    "description": "how name filters match (default contains) (matched case-insensitively by adt)",
+                    "enum": [
+                      "contains",
+                      "exact",
+                      "wildcard",
+                      "regex"
+                    ],
+                    "type": "string"
+                  },
+                  "productCode": {
+                    "description": "MSI product-code filters",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "cache.copy"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Copy the package content to the local cache",
+                "properties": {
+                  "path": {
+                    "description": "cache destination (default from config Toolkit.CachePath)",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "cache.remove"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Remove the cached package content",
+                "properties": {},
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "desktop.update"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Refresh the desktop and broadcast environment changes",
+                "properties": {},
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "dialog.balloonTip"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Tray balloon / toast notification",
+                "properties": {
+                  "displayTime": {
+                    "$ref": "#/$defs/duration",
+                    "description": "how long the balloon shows"
+                  },
+                  "icon": {
+                    "description": "notification icon (default info) (matched case-insensitively by adt)",
+                    "enum": [
+                      "none",
+                      "info",
+                      "warning",
+                      "error"
+                    ],
+                    "type": "string"
+                  },
+                  "noWait": {
+                    "description": "do not block while the balloon shows",
+                    "type": "boolean"
+                  },
+                  "text": {
+                    "description": "notification text",
+                    "type": "string"
+                  },
+                  "title": {
+                    "description": "notification title",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "text"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "dialog.dialogBox"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Classic message box",
+                "properties": {
+                  "buttons": {
+                    "description": "button set (default ok) (matched case-insensitively by adt)",
+                    "enum": [
+                      "ok",
+                      "okCancel",
+                      "yesNo",
+                      "yesNoCancel",
+                      "retryCancel",
+                      "abortRetryIgnore"
+                    ],
+                    "type": "string"
+                  },
+                  "defaultButton": {
+                    "description": "default button (First/Second/Third)",
+                    "type": "string"
+                  },
+                  "icon": {
+                    "description": "box icon (matched case-insensitively by adt)",
+                    "enum": [
+                      "information",
+                      "warning",
+                      "error",
+                      "question"
+                    ],
+                    "type": "string"
+                  },
+                  "text": {
+                    "description": "message text",
+                    "type": "string"
+                  },
+                  "timeout": {
+                    "$ref": "#/$defs/duration",
+                    "description": "bound how long the box shows"
+                  }
+                },
+                "required": [
+                  "text"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "dialog.notifyIcon"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Persistent tray notification icon",
+                "properties": {
+                  "displayTime": {
+                    "$ref": "#/$defs/duration",
+                    "description": "how long the balloon shows"
+                  },
+                  "icon": {
+                    "description": "notification icon (default info) (matched case-insensitively by adt)",
+                    "enum": [
+                      "none",
+                      "info",
+                      "warning",
+                      "error"
+                    ],
+                    "type": "string"
+                  },
+                  "noWait": {
+                    "description": "do not block while the balloon shows",
+                    "type": "boolean"
+                  },
+                  "text": {
+                    "description": "notification text",
+                    "type": "string"
+                  },
+                  "title": {
+                    "description": "notification title",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "text"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "dialog.notifyIconClose"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Remove the tray notification icon",
+                "properties": {},
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "dialog.progress"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Show or update the modeless progress dialog",
+                "properties": {
+                  "messageAlignment": {
+                    "description": "status text alignment",
+                    "type": "string"
+                  },
+                  "progressPercentage": {
+                    "description": "bar fill 0-100; negative renders a marquee",
+                    "type": "number"
+                  },
+                  "statusMessage": {
+                    "description": "main status text",
+                    "type": "string"
+                  },
+                  "statusMessageDetail": {
+                    "description": "secondary detail text",
+                    "type": "string"
+                  },
+                  "windowLocation": {
+                    "description": "window placement",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "dialog.progressClose"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Close the progress dialog",
+                "properties": {},
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "dialog.prompt"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Custom prompt with up to three buttons",
+                "properties": {
+                  "buttonLeftText": {
+                    "description": "left button label",
+                    "type": "string"
+                  },
+                  "buttonMiddleText": {
+                    "description": "middle button label",
+                    "type": "string"
+                  },
+                  "buttonRightText": {
+                    "description": "right button label",
+                    "type": "string"
+                  },
+                  "icon": {
+                    "description": "prompt icon (matched case-insensitively by adt)",
+                    "enum": [
+                      "information",
+                      "warning",
+                      "error",
+                      "question"
+                    ],
+                    "type": "string"
+                  },
+                  "message": {
+                    "description": "prompt text",
+                    "type": "string"
+                  },
+                  "messageAlignment": {
+                    "description": "text alignment",
+                    "type": "string"
+                  },
+                  "noWait": {
+                    "description": "show without waiting for an answer",
+                    "type": "boolean"
+                  },
+                  "persistPrompt": {
+                    "description": "re-surface the prompt periodically",
+                    "type": "boolean"
+                  },
+                  "timeout": {
+                    "$ref": "#/$defs/duration",
+                    "description": "bound how long the prompt shows"
+                  }
+                },
+                "required": [
+                  "message"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "dialog.restartPrompt"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Prompt the user to restart the computer",
+                "properties": {
+                  "countdownNoHideSeconds": {
+                    "description": "final seconds during which the prompt cannot be hidden",
+                    "type": "integer"
+                  },
+                  "countdownSeconds": {
+                    "description": "seconds until the restart is forced",
+                    "type": "integer"
+                  },
+                  "noCountdown": {
+                    "description": "show the prompt without a countdown",
+                    "type": "boolean"
+                  },
+                  "silentBlockExecution": {
+                    "description": "keep blocked apps blocked through the silent restart",
+                    "type": "boolean"
+                  },
+                  "silentRestart": {
+                    "description": "restart without prompting in silent mode",
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "dialog.welcome"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Close-apps/deferral welcome dialog",
+                "properties": {
+                  "allowDefer": {
+                    "description": "offer deferral",
+                    "type": "boolean"
+                  },
+                  "allowDeferCloseProcesses": {
+                    "description": "deferral offered; closing the apps continues immediately",
+                    "type": "boolean"
+                  },
+                  "blockExecution": {
+                    "description": "block the listed apps from restarting during the deployment",
+                    "type": "boolean"
+                  },
+                  "checkDiskSpace": {
+                    "description": "verify free disk space before continuing",
+                    "type": "boolean"
+                  },
+                  "closeProcesses": {
+                    "$ref": "#/$defs/processList",
+                    "description": "applications the user is asked to close"
+                  },
+                  "closeProcessesCountdown": {
+                    "description": "countdown seconds once deferral is exhausted",
+                    "type": "integer"
+                  },
+                  "customMessageText": {
+                    "description": "custom message shown beneath the dialog message",
+                    "type": "string"
+                  },
+                  "customText": {
+                    "description": "show the strings-table custom message",
+                    "type": "boolean"
+                  },
+                  "deferDeadline": {
+                    "$ref": "#/$defs/timestamp",
+                    "description": "date/time after which deferral is no longer offered"
+                  },
+                  "deferRunInterval": {
+                    "$ref": "#/$defs/duration",
+                    "description": "minimum interval between welcome prompts"
+                  },
+                  "deferTimes": {
+                    "description": "number of deferrals allowed",
+                    "type": "integer"
+                  },
+                  "forceCloseProcessesCountdown": {
+                    "description": "countdown seconds that force-closes the apps",
+                    "type": "integer"
+                  },
+                  "forceCountdown": {
+                    "description": "auto-continue countdown even while deferral is offered",
+                    "type": "integer"
+                  },
+                  "minimizeWindows": {
+                    "description": "minimize other windows while the prompt shows",
+                    "type": "boolean"
+                  },
+                  "notTopMost": {
+                    "description": "render as a regular window instead of always-on-top",
+                    "type": "boolean"
+                  },
+                  "persistPrompt": {
+                    "description": "re-surface the prompt periodically",
+                    "type": "boolean"
+                  },
+                  "promptToSave": {
+                    "description": "ask apps to close gracefully so users can save",
+                    "type": "boolean"
+                  },
+                  "requiredDiskSpace": {
+                    "description": "required disk space in MB (0 = auto-calculate)",
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "dll.register"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Register a DLL (regsvr32)",
+                "properties": {
+                  "filePath": {
+                    "description": "DLL to (un)register (relative to Files/)",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "filePath"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "dll.unregister"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Unregister a DLL (regsvr32 /u)",
+                "properties": {
+                  "filePath": {
+                    "description": "DLL to (un)register (relative to Files/)",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "filePath"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "edge.extensionAdd"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Add an Edge extension via the ExtensionSettings policy",
+                "properties": {
+                  "extensionId": {
+                    "description": "extension ID",
+                    "type": "string"
+                  },
+                  "installationMode": {
+                    "description": "policy installation mode (matched case-insensitively by adt)",
+                    "enum": [
+                      "blocked",
+                      "allowed",
+                      "removed",
+                      "force_installed",
+                      "normal_installed"
+                    ],
+                    "type": "string"
+                  },
+                  "minimumVersionRequired": {
+                    "description": "minimum extension version",
+                    "type": "string"
+                  },
+                  "updateUrl": {
+                    "description": "extension update URL",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "extensionId",
+                  "updateUrl",
+                  "installationMode"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "edge.extensionRemove"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Remove an Edge extension policy entry",
+                "properties": {
+                  "extensionId": {
+                    "description": "extension ID",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "extensionId"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "env.remove"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Remove an environment variable",
+                "properties": {
+                  "target": {
+                    "description": "scope (default process) (matched case-insensitively by adt)",
+                    "enum": [
+                      "process",
+                      "user",
+                      "machine"
+                    ],
+                    "type": "string"
+                  },
+                  "variable": {
+                    "description": "variable name",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "variable"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "env.set"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Set an environment variable",
+                "properties": {
+                  "expandable": {
+                    "description": "store as REG_EXPAND_SZ (registry targets)",
+                    "type": "boolean"
+                  },
+                  "target": {
+                    "description": "scope (default process) (matched case-insensitively by adt)",
+                    "enum": [
+                      "process",
+                      "user",
+                      "machine"
+                    ],
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "variable value",
+                    "type": "string"
+                  },
+                  "variable": {
+                    "description": "variable name",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "variable",
+                  "value"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "file.copy"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Copy files or folders to the target machine",
+                "properties": {
+                  "continueOnError": {
+                    "description": "keep copying when individual items fail",
+                    "type": "boolean"
+                  },
+                  "destination": {
+                    "description": "destination path on the target machine",
+                    "type": "string"
+                  },
+                  "fileCopyMode": {
+                    "description": "copy engine (default from config Toolkit.FileCopyMode) (matched case-insensitively by adt)",
+                    "enum": [
+                      "native",
+                      "robocopy"
+                    ],
+                    "type": "string"
+                  },
+                  "flatten": {
+                    "description": "copy all files into the destination root",
+                    "type": "boolean"
+                  },
+                  "path": {
+                    "description": "source files/folders (relative paths resolve against Files/)",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "recurse": {
+                    "description": "copy folder trees recursively",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "path",
+                  "destination"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "file.copyToUserProfiles"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Copy items into every user profile",
+                "properties": {
+                  "continueOnError": {
+                    "description": "keep copying when individual items fail",
+                    "type": "boolean"
+                  },
+                  "destination": {
+                    "description": "destination path on the target machine",
+                    "type": "string"
+                  },
+                  "fileCopyMode": {
+                    "description": "copy engine (default from config Toolkit.FileCopyMode) (matched case-insensitively by adt)",
+                    "enum": [
+                      "native",
+                      "robocopy"
+                    ],
+                    "type": "string"
+                  },
+                  "flatten": {
+                    "description": "copy all files into the destination root",
+                    "type": "boolean"
+                  },
+                  "path": {
+                    "description": "source files/folders (relative paths resolve against Files/)",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "recurse": {
+                    "description": "copy folder trees recursively",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "path",
+                  "destination"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "file.remove"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Remove files or folders from the target machine",
+                "properties": {
+                  "path": {
+                    "description": "paths to remove (globs allowed)",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "recurse": {
+                    "description": "remove folder trees recursively",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "file.removeFromUserProfiles"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Remove items from every user profile",
+                "properties": {
+                  "path": {
+                    "description": "profile-relative paths to remove",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "recurse": {
+                    "description": "remove folder trees recursively",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "folder.create"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Create a folder (and parents)",
+                "properties": {
+                  "path": {
+                    "description": "folder to create",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "folder.remove"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Remove a folder and its contents",
+                "properties": {
+                  "disableRecursion": {
+                    "description": "only remove the folder's own files",
+                    "type": "boolean"
+                  },
+                  "path": {
+                    "description": "folder to remove",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "fonts.add"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Install a font file",
+                "properties": {
+                  "filePath": {
+                    "description": "font file (relative to Files/)",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "filePath"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "fonts.remove"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Remove an installed font",
+                "properties": {
+                  "name": {
+                    "description": "installed font name",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "gpo.update"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Run a group policy update (gpupdate)",
+                "properties": {},
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "ini.remove"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Remove an INI key",
+                "properties": {
+                  "filePath": {
+                    "description": "INI file",
+                    "type": "string"
+                  },
+                  "key": {
+                    "description": "key to remove",
+                    "type": "string"
+                  },
+                  "section": {
+                    "description": "section name",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "filePath",
+                  "section",
+                  "key"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "ini.removeSection"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Remove a whole INI section",
+                "properties": {
+                  "filePath": {
+                    "description": "INI file",
+                    "type": "string"
+                  },
+                  "section": {
+                    "description": "section to remove",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "filePath",
+                  "section"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "ini.set"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Write an INI value",
+                "properties": {
+                  "filePath": {
+                    "description": "INI file",
+                    "type": "string"
+                  },
+                  "key": {
+                    "description": "key name",
+                    "type": "string"
+                  },
+                  "section": {
+                    "description": "section name",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "value (empty writes Key=)",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "filePath",
+                  "section",
+                  "key"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "msi.install"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Install an MSI (or repair by product code) via msiexec",
+                "properties": {
+                  "additionalArguments": {
+                    "description": "append to the msiexec parameters",
+                    "type": "string"
+                  },
+                  "arguments": {
+                    "description": "override the default msiexec parameters from config",
+                    "type": "string"
+                  },
+                  "logFileName": {
+                    "description": "override the derived MSI log file name",
+                    "type": "string"
+                  },
+                  "loggingOptions": {
+                    "description": "override config MSI.LoggingOptions (default \"/L*V\")",
+                    "type": "string"
+                  },
+                  "path": {
+                    "description": "MSI file (relative to Files/) or an installed product-code GUID",
+                    "type": "string"
+                  },
+                  "rebootExitCodes": {
+                    "description": "override the exit codes flagging a reboot",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  },
+                  "secureArguments": {
+                    "description": "keep the composed msiexec arguments out of the log",
+                    "type": "boolean"
+                  },
+                  "skipInstalledCheck": {
+                    "description": "skip the already-installed product check",
+                    "type": "boolean"
+                  },
+                  "successExitCodes": {
+                    "description": "override the exit codes considered successful",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  },
+                  "transforms": {
+                    "description": "MST transforms applied via TRANSFORMS=",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "msi.installAsUser"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Install an MSI inside a logged-on user's session",
+                "properties": {
+                  "additionalArguments": {
+                    "description": "append to the msiexec parameters",
+                    "type": "string"
+                  },
+                  "allUsers": {
+                    "description": "run in every logged-on user session",
+                    "type": "boolean"
+                  },
+                  "arguments": {
+                    "description": "override the default msiexec parameters from config",
+                    "type": "string"
+                  },
+                  "logFileName": {
+                    "description": "override the derived MSI log file name",
+                    "type": "string"
+                  },
+                  "loggingOptions": {
+                    "description": "override config MSI.LoggingOptions (default \"/L*V\")",
+                    "type": "string"
+                  },
+                  "path": {
+                    "description": "MSI file (relative to Files/) or an installed product-code GUID",
+                    "type": "string"
+                  },
+                  "rebootExitCodes": {
+                    "description": "override the exit codes flagging a reboot",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  },
+                  "secureArguments": {
+                    "description": "keep the composed msiexec arguments out of the log",
+                    "type": "boolean"
+                  },
+                  "skipInstalledCheck": {
+                    "description": "skip the already-installed product check",
+                    "type": "boolean"
+                  },
+                  "successExitCodes": {
+                    "description": "override the exit codes considered successful",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  },
+                  "transforms": {
+                    "description": "MST transforms applied via TRANSFORMS=",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "userName": {
+                    "description": "target logged-on user (\"user\" or \"DOMAIN\\\\user\"); empty targets the first active session",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "msi.patch"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Apply an MSP patch",
+                "properties": {
+                  "additionalArguments": {
+                    "description": "append to the msiexec parameters",
+                    "type": "string"
+                  },
+                  "logFileName": {
+                    "description": "override the derived log file name",
+                    "type": "string"
+                  },
+                  "loggingOptions": {
+                    "description": "override config MSI.LoggingOptions",
+                    "type": "string"
+                  },
+                  "path": {
+                    "description": "MSP patch file (relative to Files/)",
+                    "type": "string"
+                  },
+                  "rebootExitCodes": {
+                    "description": "override the reboot exit codes",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  },
+                  "secureArguments": {
+                    "description": "keep the composed arguments out of the log",
+                    "type": "boolean"
+                  },
+                  "successExitCodes": {
+                    "description": "override the success exit codes",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "msi.repair"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Repair an installed MSI product",
+                "properties": {
+                  "additionalArguments": {
+                    "description": "append to the msiexec parameters",
+                    "type": "string"
+                  },
+                  "arguments": {
+                    "description": "override the default msiexec parameters from config",
+                    "type": "string"
+                  },
+                  "logFileName": {
+                    "description": "override the derived MSI log file name",
+                    "type": "string"
+                  },
+                  "loggingOptions": {
+                    "description": "override config MSI.LoggingOptions (default \"/L*V\")",
+                    "type": "string"
+                  },
+                  "path": {
+                    "description": "MSI file (relative to Files/) or an installed product-code GUID",
+                    "type": "string"
+                  },
+                  "rebootExitCodes": {
+                    "description": "override the exit codes flagging a reboot",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  },
+                  "secureArguments": {
+                    "description": "keep the composed msiexec arguments out of the log",
+                    "type": "boolean"
+                  },
+                  "successExitCodes": {
+                    "description": "override the exit codes considered successful",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  },
+                  "transforms": {
+                    "description": "MST transforms applied via TRANSFORMS=",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "msi.uninstall"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Uninstall an MSI by file or product code",
+                "properties": {
+                  "additionalArguments": {
+                    "description": "append to the msiexec parameters",
+                    "type": "string"
+                  },
+                  "arguments": {
+                    "description": "override the default msiexec parameters from config",
+                    "type": "string"
+                  },
+                  "logFileName": {
+                    "description": "override the derived MSI log file name",
+                    "type": "string"
+                  },
+                  "loggingOptions": {
+                    "description": "override config MSI.LoggingOptions (default \"/L*V\")",
+                    "type": "string"
+                  },
+                  "path": {
+                    "description": "MSI file (relative to Files/) or an installed product-code GUID",
+                    "type": "string"
+                  },
+                  "rebootExitCodes": {
+                    "description": "override the exit codes flagging a reboot",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  },
+                  "secureArguments": {
+                    "description": "keep the composed msiexec arguments out of the log",
+                    "type": "boolean"
+                  },
+                  "successExitCodes": {
+                    "description": "override the exit codes considered successful",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  },
+                  "transforms": {
+                    "description": "MST transforms applied via TRANSFORMS=",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "msi.uninstallAsUser"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Uninstall an MSI inside a logged-on user's session",
+                "properties": {
+                  "additionalArguments": {
+                    "description": "append to the msiexec parameters",
+                    "type": "string"
+                  },
+                  "allUsers": {
+                    "description": "run in every logged-on user session",
+                    "type": "boolean"
+                  },
+                  "arguments": {
+                    "description": "override the default msiexec parameters from config",
+                    "type": "string"
+                  },
+                  "logFileName": {
+                    "description": "override the derived MSI log file name",
+                    "type": "string"
+                  },
+                  "loggingOptions": {
+                    "description": "override config MSI.LoggingOptions (default \"/L*V\")",
+                    "type": "string"
+                  },
+                  "path": {
+                    "description": "MSI file (relative to Files/) or an installed product-code GUID",
+                    "type": "string"
+                  },
+                  "rebootExitCodes": {
+                    "description": "override the exit codes flagging a reboot",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  },
+                  "secureArguments": {
+                    "description": "keep the composed msiexec arguments out of the log",
+                    "type": "boolean"
+                  },
+                  "successExitCodes": {
+                    "description": "override the exit codes considered successful",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  },
+                  "transforms": {
+                    "description": "MST transforms applied via TRANSFORMS=",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "userName": {
+                    "description": "target logged-on user (\"user\" or \"DOMAIN\\\\user\"); empty targets the first active session",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "msu.install"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Install Microsoft update packages (.msu) from a directory",
+                "properties": {
+                  "directory": {
+                    "description": "directory of .msu files (relative to Files/) or a single .msu",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "directory"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "permission.set"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Grant, deny or remove NTFS/registry permissions",
+                "properties": {
+                  "action": {
+                    "description": "permission action (default grant) (matched case-insensitively by adt)",
+                    "enum": [
+                      "grant",
+                      "deny",
+                      "remove"
+                    ],
+                    "type": "string"
+                  },
+                  "disableInheritance": {
+                    "description": "protect the ACL from parent inheritance",
+                    "type": "boolean"
+                  },
+                  "enableInheritance": {
+                    "description": "re-enable ACL inheritance from the parent",
+                    "type": "boolean"
+                  },
+                  "inheritance": {
+                    "description": "how the ACE propagates to children (default none) (matched case-insensitively by adt)",
+                    "enum": [
+                      "none",
+                      "object",
+                      "container",
+                      "both"
+                    ],
+                    "type": "string"
+                  },
+                  "path": {
+                    "description": "file, folder or registry key",
+                    "type": "string"
+                  },
+                  "permission": {
+                    "description": "simplified permission set (matched case-insensitively by adt)",
+                    "enum": [
+                      "FullControl",
+                      "Modify",
+                      "ReadAndExecute",
+                      "Read",
+                      "Write"
+                    ],
+                    "type": "string"
+                  },
+                  "user": {
+                    "description": "NTAccount (\"DOMAIN\\\\User\") or SID",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path",
+                  "user"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "process.blockExecution"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Block the named applications from starting (IFEO)",
+                "properties": {
+                  "processes": {
+                    "description": "process names (without extension) to block",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "processes"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "process.sendKeys"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Send a key sequence to a window",
+                "properties": {
+                  "keys": {
+                    "description": "key sequence to type",
+                    "type": "string"
+                  },
+                  "waitSeconds": {
+                    "description": "seconds to wait for the window",
+                    "type": "integer"
+                  },
+                  "windowTitle": {
+                    "description": "substring match for the target window title",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "windowTitle",
+                  "keys"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "process.start"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Launch a process and classify its exit code",
+                "properties": {
+                  "arguments": {
+                    "description": "raw argument string",
+                    "type": "string"
+                  },
+                  "createNoWindow": {
+                    "description": "suppress console window creation and capture output",
+                    "type": "boolean"
+                  },
+                  "denyUserTermination": {
+                    "description": "deny the interactive user PROCESS_TERMINATE",
+                    "type": "boolean"
+                  },
+                  "expandEnvironmentVariables": {
+                    "description": "expand %VAR% in filePath/arguments",
+                    "type": "boolean"
+                  },
+                  "filePath": {
+                    "description": "executable to launch; relative paths resolve against Files/",
+                    "type": "string"
+                  },
+                  "ignoreExitCodes": {
+                    "description": "exit codes to ignore; \"*\" ignores every code",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "killChildProcessesWithParent": {
+                    "description": "terminate surviving children with the root process",
+                    "type": "boolean"
+                  },
+                  "msiExecWaitTime": {
+                    "$ref": "#/$defs/duration",
+                    "description": "bound the MSI mutex wait"
+                  },
+                  "noStreamLogging": {
+                    "description": "do not log captured StdOut/StdErr",
+                    "type": "boolean"
+                  },
+                  "noTerminateOnTimeout": {
+                    "description": "leave the process running when the timeout elapses",
+                    "type": "boolean"
+                  },
+                  "noWait": {
+                    "description": "return immediately after launch",
+                    "type": "boolean"
+                  },
+                  "priorityClass": {
+                    "description": "scheduling priority (matched case-insensitively by adt)",
+                    "enum": [
+                      "idle",
+                      "belowNormal",
+                      "normal",
+                      "aboveNormal",
+                      "high",
+                      "realTime"
+                    ],
+                    "type": "string"
+                  },
+                  "rebootExitCodes": {
+                    "description": "override the reboot exit codes",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  },
+                  "secureArguments": {
+                    "description": "keep arguments out of every log line",
+                    "type": "boolean"
+                  },
+                  "streamEncoding": {
+                    "description": "decode captured output with this encoding (matched case-insensitively by adt)",
+                    "enum": [
+                      "utf-16le",
+                      "oem"
+                    ],
+                    "type": "string"
+                  },
+                  "successExitCodes": {
+                    "description": "override the success exit codes",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  },
+                  "timeout": {
+                    "$ref": "#/$defs/duration",
+                    "description": "bound the process runtime"
+                  },
+                  "timeoutAction": {
+                    "description": "on timeout: error (default) or continue without error (matched case-insensitively by adt)",
+                    "enum": [
+                      "error",
+                      "continue"
+                    ],
+                    "type": "string"
+                  },
+                  "useShellExecute": {
+                    "description": "launch without stream redirection",
+                    "type": "boolean"
+                  },
+                  "verb": {
+                    "description": "ShellExecute verb, e.g. \"runas\"",
+                    "type": "string"
+                  },
+                  "waitForChildProcesses": {
+                    "description": "wait for the whole spawned process tree",
+                    "type": "boolean"
+                  },
+                  "waitForMsiExec": {
+                    "description": "gate the launch on the Windows Installer mutex",
+                    "type": "boolean"
+                  },
+                  "windowStyle": {
+                    "description": "initial window disposition (matched case-insensitively by adt)",
+                    "enum": [
+                      "normal",
+                      "hidden",
+                      "minimized",
+                      "maximized"
+                    ],
+                    "type": "string"
+                  },
+                  "workingDirectory": {
+                    "description": "working directory override",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "filePath"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "process.startAsUser"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Launch a process inside a logged-on user's session",
+                "properties": {
+                  "allUsers": {
+                    "description": "run in every logged-on user session",
+                    "type": "boolean"
+                  },
+                  "arguments": {
+                    "description": "raw argument string",
+                    "type": "string"
+                  },
+                  "createNoWindow": {
+                    "description": "suppress console window creation and capture output",
+                    "type": "boolean"
+                  },
+                  "denyUserTermination": {
+                    "description": "deny the interactive user PROCESS_TERMINATE",
+                    "type": "boolean"
+                  },
+                  "expandEnvironmentVariables": {
+                    "description": "expand %VAR% in filePath/arguments",
+                    "type": "boolean"
+                  },
+                  "filePath": {
+                    "description": "executable to launch; relative paths resolve against Files/",
+                    "type": "string"
+                  },
+                  "ignoreExitCodes": {
+                    "description": "exit codes to ignore; \"*\" ignores every code",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "inheritEnvironmentVariables": {
+                    "description": "pass the calling process's environment",
+                    "type": "boolean"
+                  },
+                  "killChildProcessesWithParent": {
+                    "description": "terminate surviving children with the root process",
+                    "type": "boolean"
+                  },
+                  "msiExecWaitTime": {
+                    "$ref": "#/$defs/duration",
+                    "description": "bound the MSI mutex wait"
+                  },
+                  "noStreamLogging": {
+                    "description": "do not log captured StdOut/StdErr",
+                    "type": "boolean"
+                  },
+                  "noTerminateOnTimeout": {
+                    "description": "leave the process running when the timeout elapses",
+                    "type": "boolean"
+                  },
+                  "noWait": {
+                    "description": "return immediately after launch",
+                    "type": "boolean"
+                  },
+                  "priorityClass": {
+                    "description": "scheduling priority (matched case-insensitively by adt)",
+                    "enum": [
+                      "idle",
+                      "belowNormal",
+                      "normal",
+                      "aboveNormal",
+                      "high",
+                      "realTime"
+                    ],
+                    "type": "string"
+                  },
+                  "rebootExitCodes": {
+                    "description": "override the reboot exit codes",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  },
+                  "secureArguments": {
+                    "description": "keep arguments out of every log line",
+                    "type": "boolean"
+                  },
+                  "streamEncoding": {
+                    "description": "decode captured output with this encoding (matched case-insensitively by adt)",
+                    "enum": [
+                      "utf-16le",
+                      "oem"
+                    ],
+                    "type": "string"
+                  },
+                  "successExitCodes": {
+                    "description": "override the success exit codes",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  },
+                  "timeout": {
+                    "$ref": "#/$defs/duration",
+                    "description": "bound the process runtime"
+                  },
+                  "timeoutAction": {
+                    "description": "on timeout: error (default) or continue without error (matched case-insensitively by adt)",
+                    "enum": [
+                      "error",
+                      "continue"
+                    ],
+                    "type": "string"
+                  },
+                  "useHighestAvailableToken": {
+                    "description": "use the linked admin token when available, else the base token",
+                    "type": "boolean"
+                  },
+                  "useLinkedAdminToken": {
+                    "description": "require the user's linked (elevated) admin token",
+                    "type": "boolean"
+                  },
+                  "useShellExecute": {
+                    "description": "launch without stream redirection",
+                    "type": "boolean"
+                  },
+                  "useUnelevatedToken": {
+                    "description": "force the limited token even for admin users",
+                    "type": "boolean"
+                  },
+                  "userName": {
+                    "description": "target logged-on user (\"user\" or \"DOMAIN\\\\user\"); empty targets the first active session",
+                    "type": "string"
+                  },
+                  "verb": {
+                    "description": "ShellExecute verb, e.g. \"runas\"",
+                    "type": "string"
+                  },
+                  "waitForChildProcesses": {
+                    "description": "wait for the whole spawned process tree",
+                    "type": "boolean"
+                  },
+                  "waitForMsiExec": {
+                    "description": "gate the launch on the Windows Installer mutex",
+                    "type": "boolean"
+                  },
+                  "windowStyle": {
+                    "description": "initial window disposition (matched case-insensitively by adt)",
+                    "enum": [
+                      "normal",
+                      "hidden",
+                      "minimized",
+                      "maximized"
+                    ],
+                    "type": "string"
+                  },
+                  "workingDirectory": {
+                    "description": "working directory override",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "filePath"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "process.unblockExecution"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Lift application-execution blocks installed by this toolkit",
+                "properties": {},
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "registry.remove"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Remove a registry key or value",
+                "properties": {
+                  "key": {
+                    "description": "registry key path",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "value to delete; absent deletes the key itself",
+                    "type": "string"
+                  },
+                  "recurse": {
+                    "description": "delete the key's subtree",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "key"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "registry.set"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Create a registry key or set a value",
+                "properties": {
+                  "key": {
+                    "description": "registry key path, e.g. HKLM:\\SOFTWARE\\Contoso",
+                    "type": "string"
+                  },
+                  "name": {
+                    "description": "value name; absent only creates the key (\"(Default)\" for the default value)",
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "force the registry value kind (default inferred) (matched case-insensitively by adt)",
+                    "enum": [
+                      "string",
+                      "expandString",
+                      "multiString",
+                      "binary",
+                      "dword",
+                      "qword"
+                    ],
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "value data; YAML typing decides string vs int, `type` disambiguates, binary is base64",
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  },
+                  "wow6432Node": {
+                    "description": "write the 32-bit registry view",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "key"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "regsvr32.invoke"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Register or unregister a DLL with an explicit action",
+                "properties": {
+                  "action": {
+                    "description": "regsvr32 action (matched case-insensitively by adt)",
+                    "enum": [
+                      "register",
+                      "unregister"
+                    ],
+                    "type": "string"
+                  },
+                  "filePath": {
+                    "description": "DLL path (relative to Files/)",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "filePath",
+                  "action"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "sccm.installUpdates"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Install pending ConfigMgr software updates",
+                "properties": {},
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "sccm.invokeTask"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Trigger a ConfigMgr client schedule task",
+                "properties": {
+                  "scheduleId": {
+                    "description": "schedule name (e.g. HardwareInventory) or {GUID} schedule ID",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "scheduleId"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "service.setStartMode"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Set a service's startup mode",
+                "properties": {
+                  "name": {
+                    "description": "service name",
+                    "type": "string"
+                  },
+                  "startMode": {
+                    "description": "startup mode (matched case-insensitively by adt)",
+                    "enum": [
+                      "Automatic",
+                      "Automatic (Delayed Start)",
+                      "Manual",
+                      "Disabled"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "startMode"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "service.start"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Start a service and its dependencies",
+                "properties": {
+                  "name": {
+                    "description": "service name",
+                    "type": "string"
+                  },
+                  "pendingStatusWait": {
+                    "$ref": "#/$defs/duration",
+                    "description": "how long to wait out a pending state"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "service.stop"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Stop a service and its dependent services",
+                "properties": {
+                  "name": {
+                    "description": "service name",
+                    "type": "string"
+                  },
+                  "pendingStatusWait": {
+                    "$ref": "#/$defs/duration",
+                    "description": "how long to wait out a pending state"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "shortcut.create"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Create a .lnk or .url shortcut",
+                "properties": {
+                  "arguments": {
+                    "description": "target arguments (.lnk only)",
+                    "type": "string"
+                  },
+                  "description": {
+                    "description": "shortcut description (.lnk only)",
+                    "type": "string"
+                  },
+                  "hotkey": {
+                    "description": "hotkey such as \"Ctrl+Alt+F9\" (.lnk only)",
+                    "type": "string"
+                  },
+                  "iconIndex": {
+                    "description": "icon index within the icon file",
+                    "type": "integer"
+                  },
+                  "iconLocation": {
+                    "description": "icon file",
+                    "type": "string"
+                  },
+                  "path": {
+                    "description": "the .lnk or .url file to create",
+                    "type": "string"
+                  },
+                  "targetPath": {
+                    "description": ".lnk target or .url URL",
+                    "type": "string"
+                  },
+                  "windowStyle": {
+                    "description": "launch window style (.lnk only) (matched case-insensitively by adt)",
+                    "enum": [
+                      "normal",
+                      "maximized",
+                      "minimized"
+                    ],
+                    "type": "string"
+                  },
+                  "workingDirectory": {
+                    "description": "target working directory (.lnk only)",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "path",
+                  "targetPath"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "shortcut.removeDesktop"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Remove a shortcut from the common desktop",
+                "properties": {
+                  "name": {
+                    "description": "shortcut name (\".lnk\" appended when no extension)",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "terminalServer.disable"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Switch RDS/Citrix hosts back to execute mode",
+                "properties": {},
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "terminalServer.enable"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Switch RDS/Citrix hosts to install mode",
+                "properties": {},
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "test.fail"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "test helper",
+                "properties": {},
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "test.record"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "test helper",
+                "properties": {
+                  "tag": {
+                    "description": "recorded tag",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tag"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "wim.dismount"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Dismount a WIM image",
+                "properties": {
+                  "path": {
+                    "description": "the WIM mount directory",
+                    "type": "string"
+                  },
+                  "save": {
+                    "description": "commit changes on dismount (default discards)",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "path"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "wim.mount"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Mount a WIM image to a directory",
+                "properties": {
+                  "force": {
+                    "description": "clear a non-empty mount directory first",
+                    "type": "boolean"
+                  },
+                  "imagePath": {
+                    "description": "the .wim file (relative to Files/)",
+                    "type": "string"
+                  },
+                  "index": {
+                    "description": "image index (mutually exclusive with name)",
+                    "type": "integer"
+                  },
+                  "name": {
+                    "description": "image name (mutually exclusive with index)",
+                    "type": "string"
+                  },
+                  "path": {
+                    "description": "mount directory",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "imagePath",
+                  "path"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "uses": {
+                "const": "zip.create"
+              }
+            },
+            "required": [
+              "uses"
+            ]
+          },
+          "then": {
+            "properties": {
+              "with": {
+                "additionalProperties": false,
+                "description": "Create a zip archive",
+                "properties": {
+                  "destination": {
+                    "description": "the .zip file to create",
+                    "type": "string"
+                  },
+                  "overwrite": {
+                    "description": "replace an existing archive",
+                    "type": "boolean"
+                  },
+                  "path": {
+                    "description": "files/folders to archive",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "removeSource": {
+                    "description": "delete the sources after archiving",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "path",
+                  "destination"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "with"
+            ]
+          }
+        }
+      ],
+      "description": "One workflow step invocation.",
+      "properties": {
+        "continueOnError": {
+          "description": "Log a step failure and keep the phase going.",
+          "type": "boolean"
+        },
+        "name": {
+          "description": "Optional display name used in logs.",
+          "type": "string"
+        },
+        "uses": {
+          "description": "Step catalog entry (see `adt steps`).",
+          "enum": [
+            "activeSetup.set",
+            "app.uninstall",
+            "cache.copy",
+            "cache.remove",
+            "desktop.update",
+            "dialog.balloonTip",
+            "dialog.dialogBox",
+            "dialog.notifyIcon",
+            "dialog.notifyIconClose",
+            "dialog.progress",
+            "dialog.progressClose",
+            "dialog.prompt",
+            "dialog.restartPrompt",
+            "dialog.welcome",
+            "dll.register",
+            "dll.unregister",
+            "edge.extensionAdd",
+            "edge.extensionRemove",
+            "env.remove",
+            "env.set",
+            "file.copy",
+            "file.copyToUserProfiles",
+            "file.remove",
+            "file.removeFromUserProfiles",
+            "folder.create",
+            "folder.remove",
+            "fonts.add",
+            "fonts.remove",
+            "gpo.update",
+            "ini.remove",
+            "ini.removeSection",
+            "ini.set",
+            "msi.install",
+            "msi.installAsUser",
+            "msi.patch",
+            "msi.repair",
+            "msi.uninstall",
+            "msi.uninstallAsUser",
+            "msu.install",
+            "permission.set",
+            "process.blockExecution",
+            "process.sendKeys",
+            "process.start",
+            "process.startAsUser",
+            "process.unblockExecution",
+            "registry.remove",
+            "registry.set",
+            "regsvr32.invoke",
+            "sccm.installUpdates",
+            "sccm.invokeTask",
+            "service.setStartMode",
+            "service.start",
+            "service.stop",
+            "shortcut.create",
+            "shortcut.removeDesktop",
+            "terminalServer.disable",
+            "terminalServer.enable",
+            "test.fail",
+            "test.record",
+            "wim.dismount",
+            "wim.mount",
+            "zip.create"
+          ]
+        },
+        "with": {
+          "description": "Step parameters (schema depends on `uses`).",
+          "type": "object"
+        }
+      },
+      "required": [
+        "uses"
+      ],
+      "type": "object"
+    },
+    "timestamp": {
+      "anyOf": [
+        {
+          "format": "date-time"
+        },
+        {
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        }
+      ],
+      "description": "RFC 3339 timestamp (\"2026-08-01T17:00:00Z\") or bare date (\"2026-08-01\", local midnight).",
+      "type": "string"
+    }
+  },
+  "$id": "https://github.com/deploymenttheory/go-appdeploymenttoolkit/manifest/winadt.schema-v0.1.0-alpha.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A go-appdeploymenttoolkit deployment: session metadata plus nine phase slots composed of steps from the adt step catalog. Structural schema only — `adt validate` additionally applies cross-field semantic rules, package-file existence checks and platform gating.",
+  "properties": {
+    "apiVersion": {
+      "const": "v0.1.0-alpha",
+      "description": "Manifest schema version."
+    },
+    "kind": {
+      "const": "Deployment",
+      "description": "Manifest kind."
+    },
+    "phases": {
+      "additionalProperties": false,
+      "description": "The nine phase slots; all optional, each a list of steps.",
+      "properties": {
+        "install": {
+          "description": "Steps of the install phase, run in order.",
+          "oneOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/step"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "postInstall": {
+          "description": "Steps of the postInstall phase, run in order.",
+          "oneOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/step"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "postRepair": {
+          "description": "Steps of the postRepair phase, run in order.",
+          "oneOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/step"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "postUninstall": {
+          "description": "Steps of the postUninstall phase, run in order.",
+          "oneOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/step"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "preInstall": {
+          "description": "Steps of the preInstall phase, run in order.",
+          "oneOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/step"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "preRepair": {
+          "description": "Steps of the preRepair phase, run in order.",
+          "oneOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/step"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "preUninstall": {
+          "description": "Steps of the preUninstall phase, run in order.",
+          "oneOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/step"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "repair": {
+          "description": "Steps of the repair phase, run in order.",
+          "oneOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/step"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "uninstall": {
+          "description": "Steps of the uninstall phase, run in order.",
+          "oneOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/step"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "session": {
+      "additionalProperties": false,
+      "description": "Deployment session metadata (curated mirror of adt.SessionOptions).",
+      "properties": {
+        "appArch": {
+          "description": "application architecture label (e.g. x64)",
+          "type": "string"
+        },
+        "appLang": {
+          "description": "application language tag (default \"EN\")",
+          "type": "string"
+        },
+        "appName": {
+          "description": "application name",
+          "type": "string"
+        },
+        "appRevision": {
+          "description": "package revision (default \"01\")",
+          "type": "string"
+        },
+        "appVendor": {
+          "description": "application vendor",
+          "type": "string"
+        },
+        "appVersion": {
+          "description": "application version",
+          "type": "string"
+        },
+        "closeProcesses": {
+          "$ref": "#/$defs/processList",
+          "description": "processes the welcome dialog offers to close (AppProcessesToClose)"
+        },
+        "deployMode": {
+          "description": "author-intended deploy mode; the runtime --deploy-mode flag wins (matched case-insensitively by adt)",
+          "enum": [
+            "auto",
+            "interactive",
+            "nonInteractive",
+            "silent"
+          ],
+          "type": "string"
+        },
+        "disableLogging": {
+          "description": "disable the session log file",
+          "type": "boolean"
+        },
+        "installName": {
+          "description": "override the composed install name",
+          "type": "string"
+        },
+        "installTitle": {
+          "description": "override the dialog title",
+          "type": "string"
+        },
+        "languageOverride": {
+          "description": "UI language override (wins over config)",
+          "type": "string"
+        },
+        "logName": {
+          "description": "override the derived log file name",
+          "type": "string"
+        },
+        "noOobeDetection": {
+          "description": "skip OOBE/ESP checks during Auto deploy-mode resolution",
+          "type": "boolean"
+        },
+        "noProcessDetection": {
+          "description": "skip processes-to-close checks during Auto deploy-mode resolution",
+          "type": "boolean"
+        },
+        "noSessionDetection": {
+          "description": "skip session-0 checks during Auto deploy-mode resolution",
+          "type": "boolean"
+        },
+        "processInteractivityDetection": {
+          "description": "in session 0, require an interactive window station",
+          "type": "boolean"
+        },
+        "rebootExitCodes": {
+          "description": "exit codes flagging a reboot (default [1641, 3010])",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "requireAdmin": {
+          "description": "fail fast unless running with administrative rights",
+          "type": "boolean"
+        },
+        "successExitCodes": {
+          "description": "exit codes treated as success (default [0])",
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "suppressRebootPassThru": {
+          "description": "return 0 instead of a reboot exit code",
+          "type": "boolean"
+        },
+        "terminalServerMode": {
+          "description": "toggle RDS install mode around the deployment",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "required": [
+    "apiVersion",
+    "kind",
+    "session",
+    "phases"
+  ],
+  "title": "adt deployment manifest (v0.1.0-alpha, windows)",
+  "type": "object"
+}

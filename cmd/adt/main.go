@@ -19,7 +19,7 @@ func main() {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 	}
-	root.AddCommand(newRunCommand(), newNewCommand(), newClientCommand())
+	root.AddCommand(newRunCommand(), newNewCommand(), newClientCommand(), newValidateCommand(), newStepsCommand(), newSchemaCommand())
 	if err := root.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, "adt:", err)
 		os.Exit(1)

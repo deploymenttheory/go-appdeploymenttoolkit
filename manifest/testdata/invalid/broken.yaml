@@ -1,0 +1,24 @@
+apiVersion: adt/v9
+kind: Deployment
+extras: true
+session:
+  appName: Broken
+  appVersio: "1.0"
+  disableLogging: maybe
+phases:
+  instal:
+    - uses: msi.install
+      with: {path: x.msi}
+  install:
+    - uses: msi.instal
+    - uses: msi.install
+    - uses: process.start
+      with:
+        filePath: setup.exe
+        windowStyle: hiden
+        timeout: 90
+        priorityClass: turbo
+        arguments: [a, b]
+    - uses: dialog.welcome
+      with:
+        deferTimes: 3

@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/dialogclient"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/win/dialogclient"
 )
 
 // newClientCommand exposes the hidden dialog-client entrypoint. The dialog

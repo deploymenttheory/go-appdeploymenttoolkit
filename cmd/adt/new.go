@@ -63,14 +63,65 @@ func scaffold(dir, appName string) error {
 		}
 	}
 
+	// Seed a starter manifest: the no-code path (`adt validate` + `adt run`).
+	manifestPath := filepath.Join(dir, "deployment.yaml")
+	if _, err := os.Stat(manifestPath); err != nil {
+		starter := strings.ReplaceAll(manifestTemplate, "{{AppName}}", appName)
+		if err := os.WriteFile(manifestPath, []byte(starter), 0o644); err != nil {
+			return fmt.Errorf("writing deployment.yaml: %w", err)
+		}
+	}
+
 	fmt.Printf("Scaffolded deployment for %q in %s\n", appName, dir)
-	fmt.Println("Next steps:")
-	fmt.Println("  1. cd", dir, "&& go mod tidy")
-	fmt.Println("  2. Drop your installer under Files/ and edit the Install phase in main.go")
-	fmt.Println("  3. Tune Config/config.yaml if the defaults don't suit")
-	fmt.Println("  4. GOOS=windows go build -o Invoke-AppDeployToolkit.exe")
+	fmt.Println("Next steps (manifest workflow):")
+	fmt.Println("  1. Drop your installer under Files/ and edit deployment.yaml (`adt steps` lists the step catalog)")
+	fmt.Println("  2. adt validate", dir)
+	fmt.Println("  3. adt run", dir)
+	fmt.Println("Or the compiled-Go workflow:")
+	fmt.Println("  1. cd", dir, "&& go mod tidy, then edit the phases in main.go")
+	fmt.Println("  2. GOOS=windows go build -o Invoke-AppDeployToolkit.exe")
+	fmt.Println("(adt run prefers deployment.yaml when present; delete it if you only want main.go)")
 	return nil
 }
+
+// manifestTemplate is the starter deployment.yaml emitted by `adt new`.
+const manifestTemplate = `# Deployment manifest for {{AppName}}.
+# Validate with:  adt validate .
+# Run with:       adt run . --deploy-mode Silent
+# Step catalog:   adt steps
+apiVersion: v0.1.0-alpha
+kind: Deployment
+
+session:
+  appVendor: ""
+  appName: {{AppName}}
+  appVersion: "1.0.0"
+  appArch: x64
+  # Machine-wide installs need elevation; fail fast without admin rights.
+  requireAdmin: true
+  # Apps the welcome dialog offers to close (also drives Auto deploy-mode
+  # detection: with none listed, Auto resolves Silent).
+  closeProcesses: []
+
+phases:
+  preInstall:
+    - uses: dialog.welcome
+      with:
+        allowDefer: true
+        deferTimes: 3
+  install:
+    # Replace with your installer, e.g.:
+    # - uses: msi.install
+    #   with: {path: {{AppName}}.msi}
+    - uses: dialog.progress
+      with: {statusMessage: "Installing {{AppName}}..."}
+  postInstall:
+    - uses: dialog.progressClose
+  uninstall:
+    # - uses: msi.uninstall
+    #   with: {path: "{product-code-guid}"}
+    []
+`
 
 const sdkModulePath = "github.com/deploymenttheory/go-appdeploymenttoolkit"
 
@@ -100,12 +151,12 @@ package main
 import (
 	"context"
 
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/adt"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/winadt"
 )
 
 func main() {
-	(&adt.Deployment{
-		Session: adt.SessionOptions{
+	(&winadt.Deployment{
+		Session: winadt.SessionOptions{
 			AppVendor:  "",
 			AppName:    "{{AppName}}",
 			AppVersion: "1.0.0",
@@ -115,31 +166,31 @@ func main() {
 			RequireAdmin: true,
 		},
 
-		PreInstall: func(ctx context.Context, s *adt.DeploymentSession) error {
-			_, err := adt.ShowADTInstallationWelcome(ctx, adt.ShowADTInstallationWelcomeOptions{
-				CloseProcesses: []adt.ProcessObject{},
+		PreInstall: func(ctx context.Context, s *winadt.DeploymentSession) error {
+			_, err := winadt.ShowADTInstallationWelcome(ctx, winadt.ShowADTInstallationWelcomeOptions{
+				CloseProcesses: []winadt.ProcessObject{},
 				AllowDefer:     true,
 				DeferTimes:     3,
 			})
 			return err
 		},
 
-		Install: func(ctx context.Context, s *adt.DeploymentSession) error {
+		Install: func(ctx context.Context, s *winadt.DeploymentSession) error {
 			// Example: install an MSI dropped under Files/.
-			// _, err := adt.StartADTMsiProcess(ctx, adt.StartADTMsiProcessOptions{
+			// _, err := winadt.StartADTMsiProcess(ctx, winadt.StartADTMsiProcessOptions{
 			//     Action: "Install", Path: "{{AppName}}.msi",
 			// })
-			return adt.WriteADTLogEntry(ctx, adt.LogEntryOptions{
+			return winadt.WriteADTLogEntry(ctx, winadt.LogEntryOptions{
 				Message: []string{"Installing {{AppName}}..."},
 			})
 		},
 
-		PostInstall: func(ctx context.Context, s *adt.DeploymentSession) error {
+		PostInstall: func(ctx context.Context, s *winadt.DeploymentSession) error {
 			return nil
 		},
 
-		Uninstall: func(ctx context.Context, s *adt.DeploymentSession) error {
-			return adt.WriteADTLogEntry(ctx, adt.LogEntryOptions{
+		Uninstall: func(ctx context.Context, s *winadt.DeploymentSession) error {
+			return winadt.WriteADTLogEntry(ctx, winadt.LogEntryOptions{
 				Message: []string{"Uninstalling {{AppName}}..."},
 			})
 		},

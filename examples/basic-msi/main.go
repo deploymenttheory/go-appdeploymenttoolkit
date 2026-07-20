@@ -16,7 +16,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/adt"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/winadt"
 )
 
 const (
@@ -26,8 +26,8 @@ const (
 )
 
 func main() {
-	(&adt.Deployment{
-		Session: adt.SessionOptions{
+	(&winadt.Deployment{
+		Session: winadt.SessionOptions{
 			AppVendor:    "Contoso",
 			AppName:      appName,
 			AppVersion:   "1.0.0",
@@ -35,9 +35,9 @@ func main() {
 			RequireAdmin: true,
 		},
 
-		Install: func(ctx context.Context, s *adt.DeploymentSession) error {
+		Install: func(ctx context.Context, s *winadt.DeploymentSession) error {
 			// Install the MSI (silent params come from config in silent mode).
-			if _, err := adt.StartADTMsiProcess(ctx, adt.StartADTMsiProcessOptions{
+			if _, err := winadt.StartADTMsiProcess(ctx, winadt.StartADTMsiProcessOptions{
 				Action: "Install",
 				Path:   msiProduct,
 			}); err != nil {
@@ -48,39 +48,39 @@ func main() {
 			// concrete paths — unlike config values it does not expand $env:
 			// tokens (matching PSADT, where the shell expands them first), so
 			// resolve environment variables in Go.
-			if err := adt.CopyADTFile(ctx, adt.CopyADTFileOptions{
+			if err := winadt.CopyADTFile(ctx, winadt.CopyADTFileOptions{
 				Path:        []string{filepath.Join(s.DirSupportFiles(), "settings.json")},
 				Destination: filepath.Join(os.Getenv("ProgramData"), "Contoso", "ExampleApp"),
-			}); err != nil && !errors.Is(err, adt.ErrNotFound) {
+			}); err != nil && !errors.Is(err, winadt.ErrNotFound) {
 				return err
 			}
 
 			// Record a deployment marker other tooling can detect.
-			return adt.SetADTRegistryKey(ctx, adt.SetADTRegistryKeyOptions{
+			return winadt.SetADTRegistryKey(ctx, winadt.SetADTRegistryKeyOptions{
 				Key:   markerKey,
 				Name:  "Version",
 				Value: s.Options().AppVersion,
 			})
 		},
 
-		PostInstall: func(ctx context.Context, s *adt.DeploymentSession) error {
-			return adt.WriteADTLogEntry(ctx, adt.LogEntryOptions{
+		PostInstall: func(ctx context.Context, s *winadt.DeploymentSession) error {
+			return winadt.WriteADTLogEntry(ctx, winadt.LogEntryOptions{
 				Message:  []string{appName + " installed successfully."},
-				Severity: adt.LogSeveritySuccess,
+				Severity: winadt.LogSeveritySuccess,
 			})
 		},
 
-		Uninstall: func(ctx context.Context, s *adt.DeploymentSession) error {
+		Uninstall: func(ctx context.Context, s *winadt.DeploymentSession) error {
 			// Prefer an exact uninstall by display name; fall back cleanly if
 			// the product is already gone.
-			err := adt.UninstallADTApplication(ctx, adt.UninstallADTApplicationOptions{
+			err := winadt.UninstallADTApplication(ctx, winadt.UninstallADTApplicationOptions{
 				Name:      []string{appName},
 				NameMatch: "Exact",
 			})
-			if err != nil && !errors.Is(err, adt.ErrNotFound) {
+			if err != nil && !errors.Is(err, winadt.ErrNotFound) {
 				return err
 			}
-			return adt.RemoveADTRegistryKey(ctx, adt.RemoveADTRegistryKeyOptions{Key: markerKey})
+			return winadt.RemoveADTRegistryKey(ctx, winadt.RemoveADTRegistryKeyOptions{Key: markerKey})
 		},
 	}).Run(context.Background())
 }
