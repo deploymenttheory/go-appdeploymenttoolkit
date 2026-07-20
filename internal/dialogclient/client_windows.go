@@ -68,6 +68,12 @@ func newHandler(r dialogserver.Renderer) ipc.Handler {
 				return nil, err
 			}
 			return ack{}, r.ShowBalloon(ctx, p)
+		case ipc.CmdPromptToCloseApps:
+			var p ipc.PromptToCloseAppsPayload
+			if err := decode(req.Payload, &p); err != nil {
+				return nil, err
+			}
+			return r.PromptToCloseApps(ctx, p)
 		case ipc.CmdMinimizeWindows:
 			return ack{}, r.MinimizeWindows(ctx)
 		case ipc.CmdSendKeys:

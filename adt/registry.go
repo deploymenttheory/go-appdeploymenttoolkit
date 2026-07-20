@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -561,20 +562,35 @@ func TestADTRegistryValue(ctx context.Context, opts TestADTRegistryValueOptions)
 	return true, nil
 }
 
+// hiveLoader mounts and unmounts NTUSER.DAT hives under HKEY_USERS
+// (nativeHiveLoader on Windows, stubHiveLoader elsewhere, fakes in tests).
+type hiveLoader interface {
+	Load(mountKey, hiveFile string) error
+	Unload(mountKey string) error
+}
+
+// InvokeADTAllUsersRegistryActionOptions mirrors the parameters of
+// Invoke-ADTAllUsersRegistryAction.
+type InvokeADTAllUsersRegistryActionOptions struct {
+	// SkipUnloadedProfiles only visits hives already loaded under
+	// HKEY_USERS instead of loading each logged-off profile's NTUSER.DAT.
+	SkipUnloadedProfiles bool
+	// UserProfiles overrides the profile list (default: GetADTUserProfiles
+	// with system and service profiles excluded).
+	UserProfiles []UserProfile
+}
+
 // InvokeADTAllUsersRegistryAction is the Go port of
-// Invoke-ADTAllUsersRegistryAction: it invokes the action once per real user
-// (SIDs matching S-1-5-21-*, skipping the *_Classes hives) found under
-// HKEY_USERS, so the action can apply per-user (HKU\<SID>\...) registry
-// changes. Errors from individual users are logged and collected; the
-// remaining users are still visited.
-//
-// TODO(go-port): PSADT additionally loads the NTUSER.DAT hive of every
-// logged-off user profile (reg.exe LOAD/UNLOAD) so their HKCU settings can
-// be modified too. This increment only visits hives that are already loaded
-// under HKEY_USERS (the equivalent of PSADT's -SkipUnloadedProfiles).
+// Invoke-ADTAllUsersRegistryAction: it invokes the action once per user
+// profile so the action can apply per-user (HKU\<SID>\...) registry changes.
+// Profiles whose hive is not currently loaded get their NTUSER.DAT mounted
+// under HKEY_USERS for the duration of the action and unloaded afterwards
+// (unless SkipUnloadedProfiles). Errors from individual users are logged and
+// collected; the remaining users are still visited.
 func InvokeADTAllUsersRegistryAction(
 	ctx context.Context,
-	action func(ctx context.Context, userSID string) error,
+	opts InvokeADTAllUsersRegistryActionOptions,
+	action func(ctx context.Context, profile UserProfile) error,
 ) error {
 	if action == nil {
 		return winerr.Wrap("adt: all-users registry action is nil", winerr.ErrInvalidOption)
@@ -582,31 +598,93 @@ func InvokeADTAllUsersRegistryAction(
 	if err := ctx.Err(); err != nil {
 		return fmt.Errorf("adt: %w", err)
 	}
-	sids, err := registryBackend().EnumSubkeys("HKU", "")
+	profiles := opts.UserProfiles
+	if profiles == nil {
+		var err error
+		profiles, err = GetADTUserProfiles(ctx, GetADTUserProfilesOptions{ExcludeDefaultUser: true})
+		if err != nil {
+			return err
+		}
+	}
+	return invokeAllUsersRegistry(ctx, opts, action, registryBackend(), profiles, defaultHiveLoader())
+}
+
+// invokeAllUsersRegistry is the testable orchestration behind
+// InvokeADTAllUsersRegistryAction.
+func invokeAllUsersRegistry(
+	ctx context.Context,
+	opts InvokeADTAllUsersRegistryActionOptions,
+	action func(ctx context.Context, profile UserProfile) error,
+	backend regkey.Backend,
+	profiles []UserProfile,
+	loader hiveLoader,
+) error {
+	loadedSIDs, err := backend.EnumSubkeys("HKU", "")
 	if err != nil {
 		return err
 	}
+	loaded := make(map[string]bool, len(loadedSIDs))
+	for _, sid := range loadedSIDs {
+		loaded[strings.ToUpper(sid)] = true
+	}
+
 	var errs []error
-	for _, sid := range sids {
-		if !strings.HasPrefix(sid, "S-1-5-21-") || strings.HasSuffix(sid, "_Classes") {
+	for _, profile := range profiles {
+		if profile.SID == "" {
 			continue
 		}
 		if err := ctx.Err(); err != nil {
 			errs = append(errs, fmt.Errorf("adt: %w", err))
 			break
 		}
-		logToSession(
-			"Executing action to modify HKCU registry settings for ["+sid+"].",
-			LogSeverityInfo,
-			"InvokeADTAllUsersRegistryAction",
-		)
-		if err := action(ctx, sid); err != nil {
+		runAction := func() error {
 			logToSession(
-				"Failed to modify the registry hive for user ["+sid+"]: "+err.Error(),
+				"Executing action to modify HKCU registry settings for ["+profile.NTAccount+"].",
+				LogSeverityInfo,
+				"InvokeADTAllUsersRegistryAction",
+			)
+			return action(ctx, profile)
+		}
+		var actionErr error
+		switch {
+		case loaded[strings.ToUpper(profile.SID)]:
+			actionErr = runAction()
+		case opts.SkipUnloadedProfiles:
+			logToSession(
+				"Skipping user ["+profile.NTAccount+"]: hive not loaded and SkipUnloadedProfiles is set.",
+				LogSeverityInfo,
+				"InvokeADTAllUsersRegistryAction",
+			)
+			continue
+		default:
+			hiveFile := filepath.Join(profile.ProfilePath, "NTUSER.DAT")
+			logToSession(
+				"Loading the registry hive ["+hiveFile+"] for user ["+profile.NTAccount+"].",
+				LogSeverityInfo,
+				"InvokeADTAllUsersRegistryAction",
+			)
+			if err := loader.Load(profile.SID, hiveFile); err != nil {
+				actionErr = fmt.Errorf("adt: loading hive for %s: %w", profile.NTAccount, err)
+				break
+			}
+			actionErr = runAction()
+			// Always unload: a hive left mounted blocks the user's next logon.
+			if err := loader.Unload(profile.SID); err != nil {
+				logToSession(
+					"Failed to unload the registry hive for user ["+profile.NTAccount+"]: "+err.Error(),
+					LogSeverityError,
+					"InvokeADTAllUsersRegistryAction",
+				)
+				errs = append(errs, fmt.Errorf("adt: unloading hive for %s: %w", profile.NTAccount, err))
+			}
+		}
+		if actionErr != nil {
+			logToSession(
+				"Failed to modify the registry hive for user ["+profile.NTAccount+"]: "+actionErr.Error(),
 				LogSeverityError,
 				"InvokeADTAllUsersRegistryAction",
 			)
-			errs = append(errs, fmt.Errorf("adt: all-users registry action for %s: %w", sid, err))
+			errs = append(errs, fmt.Errorf("adt: all-users registry action for %s: %w", profile.SID, actionErr))
 		}
 	}
 	return errors.Join(errs...)

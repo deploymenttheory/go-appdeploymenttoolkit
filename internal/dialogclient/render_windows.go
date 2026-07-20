@@ -49,6 +49,21 @@ const (
 	modalHeight = 430
 )
 
+// applyTopMost pins a dialog window above normal windows (PSADT dialogs are
+// always-on-top by default); NotTopMost opts out.
+func applyTopMost(w webview2.WebView, notTopMost bool) {
+	if notTopMost || w == nil {
+		return
+	}
+	hwnd := foundation.HWND(uintptr(w.Window()))
+	if hwnd == 0 {
+		return
+	}
+	hwndTopMost := ^foundation.HWND(0) // (HWND)-1
+	_ = wm.SetWindowPos(hwnd, hwndTopMost, 0, 0, 0, 0,
+		wm.SWP_NOMOVE|wm.SWP_NOSIZE|wm.SWP_NOACTIVATE)
+}
+
 // webViewDataPath returns a writable user-data folder for the WebView2 runtime.
 // Left unset, go-webview2 defaults the folder to %AppData%\<exe>, whose
 // creation fails in an elevated/high-integrity process and leaves the
@@ -165,6 +180,7 @@ func renderModalWebView(
 		w.Init("window.__DIALOG__ = " + blob + ";")
 		w.SetSize(modalWidth, modalHeight, webview2.HintFixed)
 		w.SetHtml(assets.DialogHTML())
+		applyTopMost(w, p.Base.NotTopMost)
 
 		if p.Base.TimeoutSeconds > 0 {
 			t := time.AfterFunc(time.Duration(p.Base.TimeoutSeconds)*time.Second, func() {
@@ -315,6 +331,39 @@ func (r *Renderer) closeProgressWindow() {
 	}
 	pw.w.Terminate()
 	<-pw.done
+}
+
+// PromptToCloseApps gracefully closes every window of the named processes
+// (WM_CLOSE so apps can show their own save prompt) and waits up to the
+// payload timeout for the windows to disappear.
+func (r *Renderer) PromptToCloseApps(
+	ctx context.Context,
+	p ipc.PromptToCloseAppsPayload,
+) (ipc.PromptToCloseAppsResult, error) {
+	specs := make([]procmgmt.ProcessSpec, len(p.ProcessNames))
+	for i, n := range p.ProcessNames {
+		specs[i] = procmgmt.ProcessSpec{Name: n}
+	}
+	running, err := procmgmt.RunningProcesses(specs)
+	if err != nil {
+		return ipc.PromptToCloseAppsResult{}, err
+	}
+	if len(running) == 0 {
+		return ipc.PromptToCloseAppsResult{AllClosed: true}, nil
+	}
+	pids := make([]uint32, len(running))
+	for i, proc := range running {
+		pids[i] = proc.PID
+	}
+	closed, err := procmgmt.CloseProcessWindowsGracefully(
+		ctx,
+		pids,
+		time.Duration(p.TimeoutSeconds)*time.Second,
+	)
+	if err != nil {
+		return ipc.PromptToCloseAppsResult{}, err
+	}
+	return ipc.PromptToCloseAppsResult{AllClosed: closed}, nil
 }
 
 // MinimizeWindows minimizes every top-level window by asking the shell tray to

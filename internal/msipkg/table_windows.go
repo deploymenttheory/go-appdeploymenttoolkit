@@ -169,6 +169,57 @@ func AllProperties(msiPath string) (map[string]string, error) {
 	}
 }
 
+// TableColumnStrings reads one string column (1-based index) from every row
+// of an MSI table, optionally applying transforms in-memory first (the
+// database on disk is never modified: the handle is opened transacted when
+// transforms are present and never committed). Ports the File-table read of
+// MsiUtilities.GetMsiTableColumnValues used by Zero-Config MSI discovery.
+func TableColumnStrings(msiPath, table string, column int, transforms []string) ([]string, error) {
+	if table == "" || column < 1 {
+		return nil, winerr.Wrap("msipkg: table and a 1-based column are required", winerr.ErrInvalidOption)
+	}
+	persist := ais.MSIDBOPEN_READONLY
+	if len(transforms) > 0 {
+		// MsiDatabaseApplyTransform needs a writable handle; TRANSACT keeps
+		// the changes in memory as long as MsiDatabaseCommit is never called.
+		persist = ais.MSIDBOPEN_TRANSACT
+	}
+	db, err := openMsiDatabase(msiPath, persist)
+	if err != nil {
+		return nil, err
+	}
+	defer closeMsiHandle(db)
+	for _, mst := range transforms {
+		if err := winerr.FromMsi("MsiDatabaseApplyTransform "+mst,
+			ais.MsiDatabaseApplyTransform(db, mst, 0)); err != nil {
+			return nil, err
+		}
+	}
+	view, err := openExecutedView(db, "SELECT * FROM `"+table+"`")
+	if err != nil {
+		return nil, err
+	}
+	defer closeMsiView(view)
+	var out []string
+	for {
+		var record ais.MSIHANDLE
+		code := ais.MsiViewFetch(view, &record)
+		if code == msiNoMoreItems {
+			return out, nil
+		}
+		if err := winerr.FromMsi("MsiViewFetch", code); err != nil {
+			return nil, err
+		}
+		//#nosec G115 -- column is validated >= 1 above
+		val, err := recordString(record, uint32(column))
+		closeMsiHandle(record)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, val)
+	}
+}
+
 // SetProperty updates or inserts a Property-table row in an MSI database,
 // mirroring Set-ADTMsiProperty (transacted open plus commit).
 func SetProperty(msiPath, property, value string) error {

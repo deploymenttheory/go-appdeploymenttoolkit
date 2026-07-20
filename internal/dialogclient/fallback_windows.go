@@ -6,18 +6,62 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"time"
+	"unsafe"
+
+	"golang.org/x/sys/windows"
 
 	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/ipc"
 	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/winerr"
 	wm "github.com/deploymenttheory/go-bindings-win32/bindings/win32/ui/windowsandmessaging"
 )
 
+// MessageBoxTimeoutW is undocumented but stable since Windows XP (used by
+// Windows itself and countless deployment tools): a MessageBoxW whose fifth
+// parameter is a milliseconds timeout, returning mbTimedOut on expiry.
+var (
+	moduser32              = windows.NewLazySystemDLL("user32.dll")
+	procMessageBoxTimeoutW = moduser32.NewProc("MessageBoxTimeoutW")
+)
+
+// mbTimedOut is MessageBoxTimeoutW's timeout return value.
+const mbTimedOut wm.MESSAGEBOX_RESULT = 32000
+
+// messageBoxTimeout shows a MessageBox honoring an optional timeout (zero
+// waits forever).
+func messageBoxTimeout(text, caption string, style wm.MESSAGEBOX_STYLE, timeout time.Duration) (wm.MESSAGEBOX_RESULT, error) {
+	textPtr, err := windows.UTF16PtrFromString(text)
+	if err != nil {
+		return 0, winerr.Wrap("dialogclient: encoding message text", winerr.ErrInvalidOption)
+	}
+	captionPtr, err := windows.UTF16PtrFromString(caption)
+	if err != nil {
+		return 0, winerr.Wrap("dialogclient: encoding caption", winerr.ErrInvalidOption)
+	}
+	ms := uintptr(windows.INFINITE)
+	if timeout > 0 {
+		ms = uintptr(timeout.Milliseconds())
+	}
+	ret, _, _ := procMessageBoxTimeoutW.Call(
+		0,
+		uintptr(unsafe.Pointer(textPtr)),
+		uintptr(unsafe.Pointer(captionPtr)),
+		uintptr(style),
+		0, // wLanguageId
+		ms,
+	)
+	if ret == 0 {
+		return 0, winerr.Wrap("dialogclient: MessageBoxTimeoutW", winerr.ErrDialogUnavailable)
+	}
+	return wm.MESSAGEBOX_RESULT(ret), nil //#nosec G115 -- MessageBox results are small ints
+}
+
 // renderModalNative is the WebView2-absent fallback: it draws the modal with a
-// native MessageBox. This is a degraded path — MessageBox cannot host an input
-// box, a selection list or a countdown, and offers no dialog timeout (the
-// MessageBoxTimeout API is not exposed by the bindings). Input dialogs return
-// the default value; list dialogs return the first item; the ctx timeout and
-// Base.TimeoutSeconds are not enforced here.
+// native MessageBox honoring Base.TimeoutSeconds (expiry returns
+// ButtonTimeout, mapping to the toolkit's 1618 semantics). This remains a
+// degraded path — MessageBox cannot host an input box, a selection list or a
+// countdown. Input dialogs return the default value; list dialogs return the
+// first item.
 func renderModalNative(_ context.Context, p ipc.ModalDialogPayload) (ipc.ModalDialogResult, error) {
 	vm, err := BuildViewModel(p)
 	if err != nil {
@@ -25,13 +69,17 @@ func renderModalNative(_ context.Context, p ipc.ModalDialogPayload) (ipc.ModalDi
 	}
 	text := nativeText(vm)
 	style := nativeButtonStyle(len(vm.Buttons)) | nativeIconStyle(vm.Icon)
+	style |= topMostStyle(p.Base.NotTopMost)
 
-	got, err := wm.MessageBox(0, text, p.Base.Title, style)
+	got, err := messageBoxTimeout(text, p.Base.Title, style,
+		time.Duration(p.Base.TimeoutSeconds)*time.Second)
 	if err != nil {
-		return ipc.ModalDialogResult{}, winerr.Wrap(
-			"dialogclient: MessageBox",
-			winerr.ErrDialogUnavailable,
-		)
+		return ipc.ModalDialogResult{}, err
+	}
+	if got == mbTimedOut {
+		// Explicit: the default button mapping would misattribute the
+		// timeout result to a real button.
+		return ipc.ModalDialogResult{Button: ButtonTimeout}, nil
 	}
 
 	res := ipc.ModalDialogResult{Button: mapNativeButton(got, vm.Buttons)}
@@ -44,7 +92,8 @@ func renderModalNative(_ context.Context, p ipc.ModalDialogPayload) (ipc.ModalDi
 	return res, nil
 }
 
-// renderDialogBox draws the classic DialogBox with a native MessageBox.
+// renderDialogBox draws the classic DialogBox with a native MessageBox,
+// honoring the DialogBox timeout.
 func renderDialogBox(p ipc.ModalDialogPayload) (ipc.ModalDialogResult, error) {
 	if p.Box == nil {
 		return ipc.ModalDialogResult{}, winerr.Wrap(
@@ -53,14 +102,24 @@ func renderDialogBox(p ipc.ModalDialogPayload) (ipc.ModalDialogResult, error) {
 		)
 	}
 	style := dialogBoxButtons(p.Box.Buttons) | nativeIconStyle(p.Box.Icon)
-	got, err := wm.MessageBox(0, p.Box.Text, p.Base.Title, style)
+	style |= topMostStyle(p.Base.NotTopMost)
+	got, err := messageBoxTimeout(p.Box.Text, p.Base.Title, style,
+		time.Duration(p.Box.Timeout)*time.Second)
 	if err != nil {
-		return ipc.ModalDialogResult{}, winerr.Wrap(
-			"dialogclient: MessageBox",
-			winerr.ErrDialogUnavailable,
-		)
+		return ipc.ModalDialogResult{}, err
+	}
+	if got == mbTimedOut {
+		return ipc.ModalDialogResult{Button: ButtonTimeout}, nil
 	}
 	return ipc.ModalDialogResult{Button: mapDialogBoxResult(got)}, nil
+}
+
+// topMostStyle pins the MessageBox above normal windows unless opted out.
+func topMostStyle(notTopMost bool) wm.MESSAGEBOX_STYLE {
+	if notTopMost {
+		return 0
+	}
+	return wm.MB_TOPMOST | wm.MB_SETFOREGROUND
 }
 
 // nativeText assembles the MessageBox body from the view model.

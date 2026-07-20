@@ -36,3 +36,6 @@ func startADTProcessAsUser(
 ) (*ProcessResult, error) {
 	return nil, fmt.Errorf("adt: StartADTProcessAsUser: %w", errNotWindows)
 }
+
+// decodeOEM needs the Windows OEM code page; passthrough elsewhere.
+func decodeOEM(s string) string { return s }

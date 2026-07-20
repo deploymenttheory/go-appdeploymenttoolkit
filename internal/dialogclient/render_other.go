@@ -54,6 +54,14 @@ func (*Renderer) CloseProgress(_ context.Context) error { return notWindows() }
 // ShowBalloon reports ErrNotWindows.
 func (*Renderer) ShowBalloon(_ context.Context, _ ipc.BalloonPayload) error { return notWindows() }
 
+// PromptToCloseApps reports ErrNotWindows.
+func (*Renderer) PromptToCloseApps(
+	_ context.Context,
+	_ ipc.PromptToCloseAppsPayload,
+) (ipc.PromptToCloseAppsResult, error) {
+	return ipc.PromptToCloseAppsResult{}, notWindows()
+}
+
 // MinimizeWindows reports ErrNotWindows.
 func (*Renderer) MinimizeWindows(_ context.Context) error { return notWindows() }
 

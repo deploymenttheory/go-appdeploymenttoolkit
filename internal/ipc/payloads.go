@@ -25,6 +25,8 @@ type BaseDialogOptions struct {
 	AccentColor    string         `json:"accentColor,omitempty"` // #RRGGBB
 	FluentStyle    bool           `json:"fluentStyle"`           // Fluent vs Classic
 	TimeoutSeconds int            `json:"timeoutSeconds,omitempty"`
+	// NotTopMost renders the dialog as a regular (non-always-on-top) window.
+	NotTopMost bool `json:"notTopMost,omitempty"`
 }
 
 // ModalDialogPayload wraps the modal dialog request.
@@ -57,6 +59,27 @@ type CloseAppsOptions struct {
 	ButtonDeferText    string       `json:"buttonDeferText"`
 	ButtonCloseText    string       `json:"buttonCloseText"`
 	CustomMessage      string       `json:"customMessage,omitempty"`
+	// ForcedCountdown marks CountdownSeconds as a forced auto-continue
+	// countdown (Show-ADTInstallationWelcome -ForceCountdown): it runs even
+	// while deferral is offered and resolves to Continue.
+	ForcedCountdown bool `json:"forcedCountdown,omitempty"`
+	// ContinueOnProcessClosure relabels the flow for
+	// -AllowDeferCloseProcesses: the prompt resolves as soon as the listed
+	// apps are closed.
+	ContinueOnProcessClosure bool `json:"continueOnProcessClosure,omitempty"`
+}
+
+// PromptToCloseAppsPayload asks the client to gracefully close every window
+// of the named processes (WM_CLOSE, apps may show their own save prompts) and
+// wait up to TimeoutSeconds for them to comply.
+type PromptToCloseAppsPayload struct {
+	ProcessNames   []string `json:"processNames"`
+	TimeoutSeconds int      `json:"timeoutSeconds"`
+}
+
+// PromptToCloseAppsResult reports whether all windows closed in time.
+type PromptToCloseAppsResult struct {
+	AllClosed bool `json:"allClosed"`
 }
 
 // CustomOptions mirrors CustomDialogOptions (Show-ADTInstallationPrompt).

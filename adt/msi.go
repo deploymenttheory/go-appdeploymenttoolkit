@@ -37,10 +37,8 @@ type StartADTMsiProcessOptions struct {
 	LoggingOptions string
 	// LogFileName overrides the log file name derived from the MSI.
 	LogFileName string
-	// SecureArgumentList suppresses this facade's argument logging.
-	//
-	// Deviation from PSADT: the underlying StartADTProcess still logs its
-	// own "Executing [...]" line including the composed arguments.
+	// SecureArgumentList keeps the composed msiexec arguments out of every
+	// log line, including the underlying "Executing [...]" line.
 	SecureArgumentList bool
 	// SkipMSIAlreadyInstalledCheck skips the installed-product check.
 	SkipMSIAlreadyInstalledCheck bool
@@ -598,13 +596,60 @@ func prepareMsiProcess(ctx context.Context, opts *StartADTMsiProcessOptions) (*m
 			LogSeverityInfo, "StartADTMsiProcess")
 	}
 	return &msiPreparation{procOpts: StartADTProcessOptions{
-		FilePath:         msiexecPath(),
-		ArgumentList:     args,
-		WaitForMsiExec:   true,
-		SuccessExitCodes: opts.SuccessExitCodes,
-		RebootExitCodes:  opts.RebootExitCodes,
-		PassThru:         opts.PassThru,
+		FilePath:           msiexecPath(),
+		ArgumentList:       args,
+		WaitForMsiExec:     true,
+		SecureArgumentList: opts.SecureArgumentList,
+		SuccessExitCodes:   opts.SuccessExitCodes,
+		RebootExitCodes:    opts.RebootExitCodes,
+		PassThru:           opts.PassThru,
 	}}, nil
+}
+
+// GetADTMsiExeProcessList returns a ProcessObject for every .exe in the
+// MSI's File table (with any transforms applied first), the source of the
+// automatic AppProcessesToClose list in Zero-Config MSI deployments
+// (DeploymentSession.cs builds the same list unless
+// -DisableDefaultMsiProcessList). Windows only.
+func GetADTMsiExeProcessList(
+	ctx context.Context,
+	msiPath string,
+	transforms []string,
+) ([]ProcessObject, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("adt: %w", err)
+	}
+	// File-table column 3 is FileName ("short|long" pairs).
+	names, err := msipkg.TableColumnStrings(msiPath, "File", 3, transforms)
+	if err != nil {
+		return nil, err
+	}
+	return msiExeProcessObjects(names), nil
+}
+
+// msiExeProcessObjects turns File-table FileName values into deduplicated
+// ProcessObjects: the long name of each "short|long" pair, filtered to .exe,
+// with the extension stripped.
+func msiExeProcessObjects(fileNames []string) []ProcessObject {
+	seen := map[string]bool{}
+	var out []ProcessObject
+	for _, fn := range fileNames {
+		name := fn
+		if i := strings.LastIndexByte(name, '|'); i >= 0 {
+			name = name[i+1:]
+		}
+		if !strings.EqualFold(filepath.Ext(name), ".exe") {
+			continue
+		}
+		name = strings.TrimSuffix(name, filepath.Ext(name))
+		key := strings.ToLower(name)
+		if name == "" || seen[key] {
+			continue
+		}
+		seen[key] = true
+		out = append(out, ProcessObject{Name: name})
+	}
+	return out
 }
 
 // finishMsiProcess logs the MSI exit-code message and, when the default exit
@@ -868,6 +913,12 @@ func resolveMsiLogFile(s *DeploymentSession, cfg *config.Config, logFileName, pr
 		return name + ext
 	}
 	dir := config.ExpandEnv(cfg.MSI.LogPath)
+	// When Toolkit.CompressLogs is active, msiexec logs are routed into the
+	// session's temp capture folder so they land in the final zip (PSADT
+	// parity: the compress folder wins over MSI.LogPath).
+	if s != nil && s.CompressLogDir() != "" {
+		dir = s.CompressLogDir()
+	}
 	if dir == "" {
 		if s != nil && s.LogPath() != "" {
 			dir = filepath.Dir(s.LogPath())

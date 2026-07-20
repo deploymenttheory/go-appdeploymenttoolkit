@@ -27,6 +27,7 @@ const (
 	CmdUpdateProgress     Command = "UpdateProgressDialog"
 	CmdCloseProgress      Command = "CloseProgressDialog"
 	CmdShowBalloonTip     Command = "ShowBalloonTip"
+	CmdPromptToCloseApps  Command = "PromptToCloseApps"
 	CmdMinimizeWindows    Command = "MinimizeAllWindows"
 	CmdSendKeys           Command = "SendKeys"
 	CmdGetWindowInfo      Command = "GetProcessWindowInfo"

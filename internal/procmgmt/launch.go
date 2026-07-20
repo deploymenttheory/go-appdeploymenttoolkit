@@ -63,6 +63,58 @@ func ParseWindowStyle(s string) (WindowStyle, bool) {
 	}
 }
 
+// PriorityClass mirrors System.Diagnostics.ProcessPriorityClass, the
+// scheduling priority of Start-ADTProcess's -PriorityClass parameter.
+type PriorityClass int
+
+// PriorityClass values.
+const (
+	PriorityNormal PriorityClass = iota
+	PriorityIdle
+	PriorityBelowNormal
+	PriorityAboveNormal
+	PriorityHigh
+	PriorityRealTime
+)
+
+func (p PriorityClass) String() string {
+	switch p {
+	case PriorityIdle:
+		return "Idle"
+	case PriorityBelowNormal:
+		return "BelowNormal"
+	case PriorityAboveNormal:
+		return "AboveNormal"
+	case PriorityHigh:
+		return "High"
+	case PriorityRealTime:
+		return "RealTime"
+	default:
+		return "Normal"
+	}
+}
+
+// ParsePriorityClass parses the PSADT string form (case-insensitive). An
+// empty string maps to Normal, matching Start-ADTProcess's default.
+func ParsePriorityClass(s string) (PriorityClass, bool) {
+	switch strings.ToLower(s) {
+	case "", "normal":
+		return PriorityNormal, true
+	case "idle":
+		return PriorityIdle, true
+	case "belownormal":
+		return PriorityBelowNormal, true
+	case "abovenormal":
+		return PriorityAboveNormal, true
+	case "high":
+		return PriorityHigh, true
+	case "realtime":
+		return PriorityRealTime, true
+	default:
+		return PriorityNormal, false
+	}
+}
+
 // LaunchOptions carries the launch parameters shared by every launcher
 // implementation. It is the Go analogue of PSADT's ProcessLaunchInfo.
 type LaunchOptions struct {
@@ -92,6 +144,30 @@ type LaunchOptions struct {
 	// NoWait launches the process without waiting for it to exit; the
 	// returned result carries a zero exit code and empty streams.
 	NoWait bool
+	// PriorityClass is the scheduling priority (Windows launchers only).
+	PriorityClass PriorityClass
+	// StandardInput, when non-empty, is piped to the process's stdin.
+	StandardInput string
+	// NoTerminateOnTimeout leaves the process running when the wait times
+	// out; the launch still returns winerr.ErrTimeout.
+	NoTerminateOnTimeout bool
+	// WaitForChildProcesses waits for the launched process's whole job
+	// (children included) to finish, not just the root process (Windows
+	// launchers only).
+	WaitForChildProcesses bool
+	// KillChildProcessesWithParent terminates any surviving child processes
+	// once the root process exits (Windows launchers only).
+	KillChildProcessesWithParent bool
+	// Verb is a ShellExecuteEx verb (e.g. "runas"); when set the launch goes
+	// through ShellExecuteEx with no stream capture (Windows launchers only).
+	Verb string
+	// DenyUserTermination denies PROCESS_TERMINATE on the launched process
+	// to the interactive user (Windows launchers only).
+	DenyUserTermination bool
+	// OnStarted, when set, runs right after the process starts (before any
+	// waiting); an error terminates the process and fails the launch. Used
+	// by the Windows launcher for suspended-start job assignment.
+	OnStarted func(pid int) error
 }
 
 // Validate checks the option set for launch-blocking mistakes.
@@ -108,6 +184,13 @@ func (o LaunchOptions) Validate() error {
 	}
 	if o.Timeout < 0 {
 		return fmt.Errorf("procmgmt: negative Timeout: %w", winerr.ErrInvalidOption)
+	}
+	if o.PriorityClass < PriorityNormal || o.PriorityClass > PriorityRealTime {
+		return fmt.Errorf(
+			"procmgmt: PriorityClass %d out of range: %w",
+			o.PriorityClass,
+			winerr.ErrInvalidOption,
+		)
 	}
 	return nil
 }
@@ -141,7 +224,7 @@ func (ExecLauncher) Launch(ctx context.Context, opts LaunchOptions) (*LaunchResu
 	ctx, cancel := launchContext(ctx, opts)
 	defer cancel()
 	//#nosec G204 -- launching caller-specified deployment executables is this package's purpose
-	cmd := exec.CommandContext(ctx, opts.FilePath, SplitArguments(opts.ArgumentList)...)
+	cmd := exec.Command(opts.FilePath, SplitArguments(opts.ArgumentList)...)
 	cmd.Dir = opts.WorkingDirectory
 	return runCommand(ctx, cmd, opts)
 }
@@ -155,34 +238,57 @@ func launchContext(ctx context.Context, opts LaunchOptions) (context.Context, co
 }
 
 // runCommand runs a prepared exec.Cmd honoring the shared LaunchOptions
-// semantics: stream capture, NoWait detachment, timeout classification and
+// semantics: stream capture, stdin piping, NoWait detachment, the OnStarted
+// hook, timeout classification (with optional NoTerminateOnTimeout) and
 // exit-code extraction. Both the portable and the Windows launcher funnel
-// through here.
+// through here. The cmd must NOT be built with exec.CommandContext:
+// termination on cancellation is managed here so NoTerminateOnTimeout can
+// leave the process running.
 func runCommand(ctx context.Context, cmd *exec.Cmd, opts LaunchOptions) (*LaunchResult, error) {
 	var stdout, stderr bytes.Buffer
 	if !opts.UseShellExecute {
 		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 	}
-	if opts.NoWait {
-		if err := cmd.Start(); err != nil {
-			return nil, fmt.Errorf("procmgmt: starting %q: %w", opts.FilePath, err)
+	if opts.StandardInput != "" {
+		cmd.Stdin = strings.NewReader(opts.StandardInput)
+	}
+	if err := cmd.Start(); err != nil {
+		return nil, fmt.Errorf("procmgmt: starting %q: %w", opts.FilePath, err)
+	}
+	if opts.OnStarted != nil {
+		if err := opts.OnStarted(cmd.Process.Pid); err != nil {
+			_ = cmd.Process.Kill()
+			_ = cmd.Wait()
+			return nil, fmt.Errorf("procmgmt: post-start setup for %q: %w", opts.FilePath, err)
 		}
-		// Detach: reap the process in the background so it never zombies.
-		go func() { _ = cmd.Wait() }()
+	}
+	done := make(chan error, 1)
+	go func() { done <- cmd.Wait() }()
+	if opts.NoWait {
+		// Detach: the goroutine above reaps the process so it never zombies.
 		return &LaunchResult{}, nil
 	}
-	err := cmd.Run()
+	var err error
+	select {
+	case err = <-done:
+	case <-ctx.Done():
+		if !opts.NoTerminateOnTimeout {
+			_ = cmd.Process.Kill()
+			<-done
+		}
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			return nil, fmt.Errorf(
+				"procmgmt: process %q timed out: %w",
+				opts.FilePath,
+				winerr.ErrTimeout,
+			)
+		}
+		return nil, fmt.Errorf("procmgmt: wait cancelled for %q: %w", opts.FilePath, ctx.Err())
+	}
 	result := &LaunchResult{StdOut: stdout.String(), StdErr: stderr.String()}
 	if err == nil {
 		return result, nil
-	}
-	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-		return nil, fmt.Errorf(
-			"procmgmt: process %q timed out: %w",
-			opts.FilePath,
-			winerr.ErrTimeout,
-		)
 	}
 	var exitErr *exec.ExitError
 	if errors.As(err, &exitErr) {

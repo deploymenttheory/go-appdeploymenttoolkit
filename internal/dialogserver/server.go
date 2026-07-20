@@ -53,6 +53,9 @@ type Renderer interface {
 	CloseProgress(ctx context.Context) error
 	// ShowBalloon shows a tray balloon / toast notification.
 	ShowBalloon(ctx context.Context, p ipc.BalloonPayload) error
+	// PromptToCloseApps gracefully closes the named processes' windows
+	// (WM_CLOSE, so apps can prompt to save) and waits for compliance.
+	PromptToCloseApps(ctx context.Context, p ipc.PromptToCloseAppsPayload) (ipc.PromptToCloseAppsResult, error)
 	// MinimizeWindows minimizes every top-level window on the desktop.
 	MinimizeWindows(ctx context.Context) error
 	// SendKeys sends a keystroke sequence to the window matching p.WindowTitle.
@@ -141,6 +144,18 @@ func (s *DialogServer) ShowBalloon(ctx context.Context, p ipc.BalloonPayload) er
 		return err
 	}
 	return r.ShowBalloon(ctx, p)
+}
+
+// PromptToCloseApps forwards to the renderer.
+func (s *DialogServer) PromptToCloseApps(
+	ctx context.Context,
+	p ipc.PromptToCloseAppsPayload,
+) (ipc.PromptToCloseAppsResult, error) {
+	r, err := s.active()
+	if err != nil {
+		return ipc.PromptToCloseAppsResult{}, err
+	}
+	return r.PromptToCloseApps(ctx, p)
 }
 
 // MinimizeWindows forwards to the renderer.
@@ -281,6 +296,24 @@ func (r *pipeRenderer) CloseProgress(ctx context.Context) error {
 func (r *pipeRenderer) ShowBalloon(ctx context.Context, p ipc.BalloonPayload) error {
 	_, err := r.do(ctx, ipc.CmdShowBalloonTip, p)
 	return err
+}
+
+func (r *pipeRenderer) PromptToCloseApps(
+	ctx context.Context,
+	p ipc.PromptToCloseAppsPayload,
+) (ipc.PromptToCloseAppsResult, error) {
+	raw, err := r.do(ctx, ipc.CmdPromptToCloseApps, p)
+	if err != nil {
+		return ipc.PromptToCloseAppsResult{}, err
+	}
+	var res ipc.PromptToCloseAppsResult
+	if len(raw) > 0 {
+		if err := json.Unmarshal(raw, &res); err != nil {
+			return ipc.PromptToCloseAppsResult{}, winerr.Wrap(
+				"dialogserver: decoding prompt-to-close result", winerr.ErrDialogUnavailable)
+		}
+	}
+	return res, nil
 }
 
 func (r *pipeRenderer) MinimizeWindows(ctx context.Context) error {

@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/sys/windows"
+
 	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/procmgmt"
 	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/wts"
 )
@@ -34,6 +36,10 @@ func startADTProcessAsUser(
 	ctx context.Context,
 	opts StartADTProcessAsUserOptions,
 ) (*ProcessResult, error) {
+	sel, err := resolveTokenSelection(opts)
+	if err != nil {
+		return nil, err
+	}
 	s, _ := GetADTSession() // nil session means sessionless operation
 	targets, err := resolveUserSessions(opts.UserName, opts.AllUsers)
 	if err != nil {
@@ -43,13 +49,21 @@ func startADTProcessAsUser(
 	if err != nil {
 		return nil, err
 	}
+	userOpts := procmgmt.AsUserOptions{
+		TokenSelection:              sel,
+		InheritEnvironmentVariables: opts.InheritEnvironmentVariables,
+		DenyUserTermination:         opts.DenyUserTermination,
+	}
+	// The DACL edit is handled per-target inside LaunchAsUser; the generic
+	// own-session path must not re-apply it.
+	plan.launch.DenyUserTermination = false
 	var result *ProcessResult
 	for _, target := range targets {
 		processLog(fmt.Sprintf("Preparing to execute process [%s] for user [%s]...",
 			plan.filePath, target.NTAccount()), LogSeverityInfo, "StartADTProcessAsUser")
 		result, err = runProcessPlan(ctx, s, plan, opts.WaitForMsiExec, opts.MsiExecWaitTime,
 			func(ctx context.Context, lo procmgmt.LaunchOptions) (*procmgmt.LaunchResult, error) {
-				return procmgmt.LaunchAsUser(ctx, lo, target)
+				return procmgmt.LaunchAsUser(ctx, lo, target, userOpts)
 			})
 		if err != nil {
 			return result, err
@@ -57,6 +71,53 @@ func startADTProcessAsUser(
 	}
 	return result, nil
 }
+
+// resolveTokenSelection validates the mutually exclusive token switches and
+// maps them onto a procmgmt.TokenSelection.
+func resolveTokenSelection(opts StartADTProcessAsUserOptions) (procmgmt.TokenSelection, error) {
+	set := 0
+	sel := procmgmt.TokenDefault
+	if opts.UseLinkedAdminToken {
+		set++
+		sel = procmgmt.TokenLinkedAdmin
+	}
+	if opts.UseHighestAvailableToken {
+		set++
+		sel = procmgmt.TokenHighestAvailable
+	}
+	if opts.UseUnelevatedToken {
+		set++
+		sel = procmgmt.TokenUnelevated
+	}
+	if set > 1 {
+		return procmgmt.TokenDefault, fmt.Errorf(
+			"adt: UseLinkedAdminToken, UseHighestAvailableToken and UseUnelevatedToken are mutually exclusive: %w",
+			ErrInvalidOption,
+		)
+	}
+	return sel, nil
+}
+
+// decodeOEM decodes a raw byte string of console-OEM-code-page text via
+// MultiByteToWideChar(CP_OEMCP); undecodable input passes through.
+func decodeOEM(s string) string {
+	if s == "" {
+		return s
+	}
+	src := []byte(s)
+	n, err := windows.MultiByteToWideChar(cpOEMCP, 0, &src[0], int32(len(src)), nil, 0)
+	if err != nil || n <= 0 {
+		return s
+	}
+	buf := make([]uint16, n)
+	if _, err := windows.MultiByteToWideChar(cpOEMCP, 0, &src[0], int32(len(src)), &buf[0], n); err != nil {
+		return s
+	}
+	return windows.UTF16ToString(buf)
+}
+
+// cpOEMCP is the CP_OEMCP code-page identifier.
+const cpOEMCP = 1
 
 // resolveUserSessions picks the WTS sessions to launch into: every session
 // for AllUsers, the named user's session for UserName, else the first

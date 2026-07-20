@@ -41,8 +41,10 @@ type Deployment struct {
 	Exit func(code int)
 }
 
-// Run parses the standard PSADT frontend flags (-DeploymentType,
-// -DeployMode, -SuppressRebootPassThru), opens the session, dispatches the
+// Run parses the standard PSADT frontend flags (-DeploymentType, -DeployMode,
+// -SuppressRebootPassThru, -NoOobeDetection, -NoProcessDetection,
+// -NoSessionDetection, -ProcessInteractivityDetection), opens the session,
+// dispatches the
 // three phase functions for the resolved deployment type (setting
 // InstallPhase around each), recovers panics into a logged fatal exit, then
 // closes the session and exits the process with the final exit code.
@@ -105,6 +107,10 @@ func (d *Deployment) parseFlags(opts *SessionOptions) error {
 	deploymentType := fs.String("DeploymentType", "", "Install, Uninstall or Repair")
 	deployMode := fs.String("DeployMode", "", "Auto, Interactive, NonInteractive or Silent")
 	suppressReboot := fs.Bool("SuppressRebootPassThru", false, "return 0 instead of a reboot exit code")
+	noOobe := fs.Bool("NoOobeDetection", false, "skip OOBE/ESP checks during Auto deploy-mode resolution")
+	noProcess := fs.Bool("NoProcessDetection", false, "skip processes-to-close checks during Auto deploy-mode resolution")
+	noSession := fs.Bool("NoSessionDetection", false, "skip session-0 checks during Auto deploy-mode resolution")
+	interactivity := fs.Bool("ProcessInteractivityDetection", false, "in session 0, require an interactive window station")
 	if err := fs.Parse(args); err != nil {
 		return fmt.Errorf("adt: parsing frontend flags: %w", err)
 	}
@@ -124,6 +130,18 @@ func (d *Deployment) parseFlags(opts *SessionOptions) error {
 	}
 	if *suppressReboot {
 		opts.SuppressRebootPassThru = true
+	}
+	if *noOobe {
+		opts.NoOobeDetection = true
+	}
+	if *noProcess {
+		opts.NoProcessDetection = true
+	}
+	if *noSession {
+		opts.NoSessionDetection = true
+	}
+	if *interactivity {
+		opts.ProcessInteractivityDetection = true
 	}
 	return nil
 }

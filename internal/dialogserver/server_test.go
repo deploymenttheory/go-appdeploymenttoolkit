@@ -18,14 +18,15 @@ import (
 // results. It documents the contract: the server forwards without inspecting
 // payloads, and silent/non-interactive short-circuiting is the caller's job.
 type fakeRenderer struct {
-	mu       sync.Mutex
-	modal    ipc.ModalDialogPayload
-	progress []ipc.ProgressPayload
-	balloon  ipc.BalloonPayload
-	closed   int
-	closedP  int
-	result   ipc.ModalDialogResult
-	winInfo  ipc.WindowInfoResult
+	mu          sync.Mutex
+	modal       ipc.ModalDialogPayload
+	progress    []ipc.ProgressPayload
+	balloon     ipc.BalloonPayload
+	promptClose ipc.PromptToCloseAppsPayload
+	closed      int
+	closedP     int
+	result      ipc.ModalDialogResult
+	winInfo     ipc.WindowInfoResult
 }
 
 func (f *fakeRenderer) ShowModal(_ context.Context, p ipc.ModalDialogPayload) (ipc.ModalDialogResult, error) {
@@ -61,6 +62,16 @@ func (f *fakeRenderer) ShowBalloon(_ context.Context, p ipc.BalloonPayload) erro
 	defer f.mu.Unlock()
 	f.balloon = p
 	return nil
+}
+
+func (f *fakeRenderer) PromptToCloseApps(
+	_ context.Context,
+	p ipc.PromptToCloseAppsPayload,
+) (ipc.PromptToCloseAppsResult, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.promptClose = p
+	return ipc.PromptToCloseAppsResult{AllClosed: true}, nil
 }
 
 func (f *fakeRenderer) MinimizeWindows(_ context.Context) error { return nil }
@@ -128,6 +139,12 @@ func pipeHandler(_ context.Context, req *ipc.Request) (any, error) {
 		return res, nil
 	case ipc.CmdGetWindowInfo:
 		return ipc.WindowInfoResult{Windows: []ipc.WindowInfo{{Handle: 42, Title: "Notepad"}}}, nil
+	case ipc.CmdPromptToCloseApps:
+		var p ipc.PromptToCloseAppsPayload
+		if err := json.Unmarshal(req.Payload, &p); err != nil {
+			return nil, err
+		}
+		return ipc.PromptToCloseAppsResult{AllClosed: len(p.ProcessNames) > 0}, nil
 	default:
 		return nil, nil
 	}
@@ -161,6 +178,13 @@ func TestPipeRendererEndToEnd(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, info.Windows, 1)
 	assert.Equal(t, "Notepad", info.Windows[0].Title)
+
+	closed, err := srv.PromptToCloseApps(ctx, ipc.PromptToCloseAppsPayload{
+		ProcessNames:   []string{"notepad"},
+		TimeoutSeconds: 5,
+	})
+	require.NoError(t, err)
+	assert.True(t, closed.AllClosed)
 
 	srv.Close()
 	_ = serverEnd.Close()

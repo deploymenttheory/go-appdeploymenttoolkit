@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,10 +26,16 @@ func testDeps(t *testing.T, active bool) Deps {
 	}
 	return Deps{
 		Registry: regkey.NewFake(),
-		WTS:      &wts.Static{Sessions: sessions},
+		WTS:      &wts.Static{Sessions: sessions, SessionID: 1},
 		IsAdmin:  func() bool { return true },
 		Culture:  func() string { return "en-US" },
 		Now:      func() time.Time { return time.Date(2026, 7, 18, 10, 0, 0, 0, time.UTC) },
+		// Deterministic deploy-mode probes: OOBE done, nothing running,
+		// non-interactive station, no resolvable active-user SID.
+		OobeCompleted:      func() (bool, error) { return true, nil },
+		ProcessRunning:     func([]string) (bool, error) { return false, nil },
+		ProcessInteractive: func() bool { return false },
+		ActiveUserSID:      func() string { return "" },
 	}
 }
 
@@ -55,7 +62,13 @@ func writeOverlay(t *testing.T, dir string) string {
 }
 
 func TestOpenComposesNames(t *testing.T) {
-	s, err := Open(context.Background(), testOptions(t), testDeps(t, true))
+	// PSADT 4.2 Auto semantics resolve Silent when no processes-to-close are
+	// running; give the session a running process so Auto lands Interactive.
+	opts := testOptions(t)
+	opts.AppProcessesToClose = []ProcessObject{{Name: "notepad"}}
+	deps := testDeps(t, true)
+	deps.ProcessRunning = func([]string) (bool, error) { return true, nil }
+	s, err := Open(context.Background(), opts, deps)
 	require.NoError(t, err)
 	defer s.Close(context.Background())
 
@@ -150,6 +163,61 @@ func TestLogFileWritten(t *testing.T) {
 	assert.Contains(t, content, "hello from the test")
 	assert.Contains(t, content, "[Install] ::")
 	assert.Contains(t, content, "<![LOG[") // CMTrace by default
+}
+
+// writeCompressOverlay configures CompressLogs with temp/log paths inside the
+// test's temp dir.
+func writeCompressOverlay(t *testing.T, dir string, maxHistory int) string {
+	t.Helper()
+	p := filepath.Join(dir, "config.yaml")
+	esc := func(s string) string { return strings.ReplaceAll(s, `\`, `\\`) }
+	content := "Toolkit:\n" +
+		"  LogPath: " + esc(filepath.Join(dir, "logs")) + "\n" +
+		"  LogPathNoAdminRights: " + esc(filepath.Join(dir, "logs")) + "\n" +
+		"  TempPath: " + esc(filepath.Join(dir, "temp")) + "\n" +
+		"  TempPathNoAdminRights: " + esc(filepath.Join(dir, "temp")) + "\n" +
+		"  CompressLogs: true\n" +
+		fmt.Sprintf("  LogMaxHistory: %d\n", maxHistory)
+	require.NoError(t, os.WriteFile(p, []byte(content), 0o644))
+	return p
+}
+
+func TestCompressLogsZipsAndPrunes(t *testing.T) {
+	dir := t.TempDir()
+	overlay := writeCompressOverlay(t, dir, 1)
+
+	openClose := func(tick *int) {
+		opts := testOptions(t)
+		opts.ConfigOverlayPath = overlay
+		deps := testDeps(t, true)
+		base := time.Date(2026, 7, 18, 10, 0, 0, 0, time.UTC)
+		deps.Now = func() time.Time { *tick++; return base.Add(time.Duration(*tick) * time.Second) }
+		s, err := Open(context.Background(), opts, deps)
+		require.NoError(t, err)
+
+		// The live log is redirected into the temp capture folder.
+		assert.Contains(t, s.LogPath(), filepath.Join(dir, "temp"))
+		assert.NotEmpty(t, s.CompressLogDir())
+		s.WriteLog("compressed entry", logging.SeverityInfo, "", "")
+		capture := s.CompressLogDir()
+		s.Close(context.Background())
+
+		// Capture folder removed after zipping.
+		_, err = os.Stat(capture)
+		assert.True(t, os.IsNotExist(err), "capture folder should be removed after close")
+	}
+
+	tick := 0
+	openClose(&tick)
+	archives, err := filepath.Glob(filepath.Join(dir, "logs", "*.zip"))
+	require.NoError(t, err)
+	require.Len(t, archives, 1)
+
+	// A second session with LogMaxHistory=1 prunes down to a single archive.
+	openClose(&tick)
+	archives, err = filepath.Glob(filepath.Join(dir, "logs", "*.zip"))
+	require.NoError(t, err)
+	assert.Len(t, archives, 1, "pruning should keep only LogMaxHistory archives")
 }
 
 func TestDeferHistoryLifecycle(t *testing.T) {

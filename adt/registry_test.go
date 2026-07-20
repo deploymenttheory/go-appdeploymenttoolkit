@@ -292,16 +292,86 @@ func TestInvokeADTAllUsersRegistryAction(t *testing.T) {
 	registryBackendHook = func() regkey.Backend { return backend }
 	t.Cleanup(func() { registryBackendHook = nil })
 
+	loader := &fakeHiveLoader{}
+	profiles := []UserProfile{
+		{NTAccount: `PC\alice`, SID: "S-1-5-21-1111111111-222222222-333333333-1001", ProfilePath: `C:\Users\alice`},
+		{NTAccount: `PC\bob`, SID: "S-1-5-21-1111111111-222222222-333333333-1002", ProfilePath: `C:\Users\bob`},
+		{NTAccount: `PC\carol`, SID: "S-1-5-21-1111111111-222222222-333333333-1003", ProfilePath: `C:\Users\carol`},
+	}
 	var visited []string
-	err := InvokeADTAllUsersRegistryAction(t.Context(), func(_ context.Context, userSID string) error {
-		visited = append(visited, userSID)
-		return nil
-	})
+	err := invokeAllUsersRegistry(t.Context(), InvokeADTAllUsersRegistryActionOptions{},
+		func(_ context.Context, p UserProfile) error {
+			visited = append(visited, p.SID)
+			return nil
+		}, backend, profiles, loader)
 	require.NoError(t, err)
 	assert.Equal(t, []string{
 		"S-1-5-21-1111111111-222222222-333333333-1001",
 		"S-1-5-21-1111111111-222222222-333333333-1002",
+		"S-1-5-21-1111111111-222222222-333333333-1003",
 	}, visited)
+	// Only carol's hive was not loaded: exactly one load/unload pair.
+	assert.Equal(t, []string{"S-1-5-21-1111111111-222222222-333333333-1003"}, loader.loads)
+	assert.Equal(t, loader.loads, loader.unloads)
+	assert.Contains(t, loader.loadedFiles[0], `C:\Users\carol`)
+}
+
+func TestInvokeAllUsersRegistrySkipUnloadedProfiles(t *testing.T) {
+	backend := &hkuBackend{
+		Fake:  regkey.NewFake(),
+		roots: []string{"S-1-5-21-1-1-1-1001"},
+	}
+	loader := &fakeHiveLoader{}
+	profiles := []UserProfile{
+		{NTAccount: `PC\alice`, SID: "S-1-5-21-1-1-1-1001", ProfilePath: `C:\Users\alice`},
+		{NTAccount: `PC\carol`, SID: "S-1-5-21-1-1-1-1003", ProfilePath: `C:\Users\carol`},
+	}
+	var visited []string
+	err := invokeAllUsersRegistry(t.Context(),
+		InvokeADTAllUsersRegistryActionOptions{SkipUnloadedProfiles: true},
+		func(_ context.Context, p UserProfile) error {
+			visited = append(visited, p.SID)
+			return nil
+		}, backend, profiles, loader)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"S-1-5-21-1-1-1-1001"}, visited)
+	assert.Empty(t, loader.loads, "SkipUnloadedProfiles must not load hives")
+}
+
+func TestInvokeAllUsersRegistryUnloadsOnActionError(t *testing.T) {
+	backend := &hkuBackend{Fake: regkey.NewFake(), roots: nil}
+	loader := &fakeHiveLoader{}
+	profiles := []UserProfile{
+		{NTAccount: `PC\carol`, SID: "S-1-5-21-1-1-1-1003", ProfilePath: `C:\Users\carol`},
+	}
+	err := invokeAllUsersRegistry(t.Context(), InvokeADTAllUsersRegistryActionOptions{},
+		func(_ context.Context, _ UserProfile) error {
+			return winerr.Wrap("action boom", winerr.ErrNotFound)
+		}, backend, profiles, loader)
+	assert.ErrorIs(t, err, winerr.ErrNotFound)
+	assert.Equal(t, loader.loads, loader.unloads, "the hive must be unloaded even when the action fails")
+}
+
+// fakeHiveLoader records hive load/unload calls.
+type fakeHiveLoader struct {
+	loads       []string
+	unloads     []string
+	loadedFiles []string
+	loadErr     error
+}
+
+func (f *fakeHiveLoader) Load(mountKey, hiveFile string) error {
+	if f.loadErr != nil {
+		return f.loadErr
+	}
+	f.loads = append(f.loads, mountKey)
+	f.loadedFiles = append(f.loadedFiles, hiveFile)
+	return nil
+}
+
+func (f *fakeHiveLoader) Unload(mountKey string) error {
+	f.unloads = append(f.unloads, mountKey)
+	return nil
 }
 
 func TestInvokeADTAllUsersRegistryActionCollectsErrors(t *testing.T) {
@@ -312,19 +382,25 @@ func TestInvokeADTAllUsersRegistryActionCollectsErrors(t *testing.T) {
 	registryBackendHook = func() regkey.Backend { return backend }
 	t.Cleanup(func() { registryBackendHook = nil })
 
+	loader := &fakeHiveLoader{}
+	profiles := []UserProfile{
+		{NTAccount: `PC\u1`, SID: "S-1-5-21-1-1-1-1001", ProfilePath: `C:\Users\u1`},
+		{NTAccount: `PC\u2`, SID: "S-1-5-21-1-1-1-1002", ProfilePath: `C:\Users\u2`},
+	}
 	var visited []string
-	err := InvokeADTAllUsersRegistryAction(t.Context(), func(_ context.Context, userSID string) error {
-		visited = append(visited, userSID)
-		if userSID == "S-1-5-21-1-1-1-1001" {
-			return winerr.Wrap("test failure", winerr.ErrNotFound)
-		}
-		return nil
-	})
+	err := invokeAllUsersRegistry(t.Context(), InvokeADTAllUsersRegistryActionOptions{},
+		func(_ context.Context, p UserProfile) error {
+			visited = append(visited, p.SID)
+			if p.SID == "S-1-5-21-1-1-1-1001" {
+				return winerr.Wrap("test failure", winerr.ErrNotFound)
+			}
+			return nil
+		}, backend, profiles, loader)
 	// The failing user is reported but the remaining users are still visited.
 	assert.ErrorIs(t, err, winerr.ErrNotFound)
 	assert.Len(t, visited, 2)
 
 	// A nil action is rejected.
-	err = InvokeADTAllUsersRegistryAction(t.Context(), nil)
+	err = InvokeADTAllUsersRegistryAction(t.Context(), InvokeADTAllUsersRegistryActionOptions{}, nil)
 	assert.ErrorIs(t, err, winerr.ErrInvalidOption)
 }

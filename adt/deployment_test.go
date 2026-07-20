@@ -147,6 +147,21 @@ func TestRunKeepsExplicitScriptDirectory(t *testing.T) {
 	assert.Equal(t, filepath.Join(opts.ScriptDirectory, "Files"), gotDirFiles)
 }
 
+func TestOnLogEntryHookReceivesEntries(t *testing.T) {
+	opts := testSessionOptions(t)
+	var messages []string
+	opts.Hooks.OnLogEntry = append(opts.Hooks.OnLogEntry, func(e LogEntry) {
+		messages = append(messages, e.Message)
+	})
+	s, err := OpenADTSession(context.Background(), opts)
+	require.NoError(t, err)
+	s.WriteLog("hook probe", LogSeverityInfo, "Test", "")
+	CloseADTSession(context.Background(), s)
+
+	assert.Contains(t, messages, "hook probe")
+	assert.NotEmpty(t, messages, "opening entries should also reach the hook")
+}
+
 func TestSessionFacadeFunctions(t *testing.T) {
 	opts := testSessionOptions(t)
 	var hookOrder []string

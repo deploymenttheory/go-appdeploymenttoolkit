@@ -164,6 +164,29 @@ type ShowADTInstallationWelcomeOptions struct {
 	RequiredDiskSpace            int
 	MinimizeWindows              bool
 	CustomText                   bool
+	// AllowDeferCloseProcesses implies AllowDefer and resolves the prompt
+	// as soon as the listed applications are no longer running.
+	AllowDeferCloseProcesses bool
+	// DeferRunInterval is the minimum interval between welcome prompts:
+	// while it has not elapsed since the last prompt, the call defers
+	// immediately without consuming a deferral.
+	DeferRunInterval time.Duration
+	// ForceCountdown makes the dialog auto-continue after this many
+	// seconds even while deferral is on offer.
+	ForceCountdown int
+	// PromptToSave asks the running applications to close gracefully
+	// (WM_CLOSE, so they can prompt the user to save) before any forced
+	// termination, waiting config UI.PromptToSaveTimeout.
+	PromptToSave bool
+	// BlockExecution blocks the listed applications from restarting while
+	// the deployment runs; the block lifts automatically at session close.
+	BlockExecution bool
+	// CustomMessageText overrides the strings-table custom message shown
+	// beneath the dialog message (CustomText picks the strings-table one).
+	CustomMessageText string
+	// NotTopMost renders the dialog as a regular window instead of
+	// always-on-top.
+	NotTopMost bool
 }
 
 // WelcomeResult reports how the welcome prompt resolved.
@@ -241,6 +264,7 @@ func ShowADTInstallationWelcome(
 		return WelcomeResult{}, err
 	}
 	logToSession("Evaluating installation welcome prompt.", LogSeverityInfo, "ShowADTInstallationWelcome")
+	opts.AllowDefer = opts.AllowDefer || opts.AllowDeferCloseProcesses
 
 	running, _ := GetADTRunningProcesses(ctx, opts.CloseProcesses)
 
@@ -253,7 +277,21 @@ func ShowADTInstallationWelcome(
 	}
 
 	hist, _ := s.DeferHistory()
-	state := computeDeferralState(opts.AllowDefer, opts.DeferTimes, hist.TimesRemaining, opts.DeferDeadline, time.Now())
+	now := time.Now()
+	state := computeDeferralState(opts.AllowDefer, opts.DeferTimes, hist.TimesRemaining, opts.DeferDeadline, now)
+
+	// DeferRunInterval: within the interval since the last prompt, defer
+	// again immediately without consuming a deferral (PSADT parity). Only
+	// applies while deferral is still on offer.
+	if state.Allowed && !deferRunIntervalDue(hist.RunIntervalLastTime, opts.DeferRunInterval, now) {
+		logToSession(fmt.Sprintf(
+			"Deferring: the next welcome prompt is not due until [%s].",
+			hist.RunIntervalLastTime.Add(opts.DeferRunInterval).Format(time.RFC3339)),
+			LogSeverityInfo, "ShowADTInstallationWelcome")
+		fireOnDefer(ctx, s)
+		return WelcomeResult{Action: dlgButtonDefer, Deferred: true},
+			fmt.Errorf("adt: welcome deferred (run interval): %w", ErrDeferred)
+	}
 
 	if len(running) == 0 && !state.Allowed {
 		return WelcomeResult{Action: dlgButtonContinue}, nil
@@ -270,7 +308,34 @@ func ShowADTInstallationWelcome(
 	if opts.MinimizeWindows {
 		_ = srv.MinimizeWindows(ctx)
 	}
-	return runWelcomeLoop(ctx, s, srv, opts, state)
+	res, err := runWelcomeLoop(ctx, s, srv, opts, state)
+	if err == nil && opts.BlockExecution && len(opts.CloseProcesses) > 0 {
+		// Proceeding with the deployment: block the apps from restarting and
+		// lift the block automatically at session close (PSADT clears the
+		// block on Defer/Timeout, which return errors and skip this).
+		names := make([]string, len(opts.CloseProcesses))
+		for i, p := range opts.CloseProcesses {
+			names[i] = p.Name
+		}
+		if blockErr := BlockADTAppExecution(ctx, names); blockErr != nil {
+			logToSession("Failed to block application execution: "+blockErr.Error(),
+				LogSeverityWarning, "ShowADTInstallationWelcome")
+		} else {
+			AddADTSessionClosingCallback(s, func(ctx context.Context, s *DeploymentSession) error {
+				return UnblockADTAppExecution(ctx)
+			})
+		}
+	}
+	return res, err
+}
+
+// deferRunIntervalDue reports whether enough time has passed since the last
+// welcome prompt for a new one (true when no interval or no history).
+func deferRunIntervalDue(last *time.Time, interval time.Duration, now time.Time) bool {
+	if interval <= 0 || last == nil {
+		return true
+	}
+	return !now.Before(last.Add(interval))
 }
 
 // runWelcomeLoop drives the close-apps dialog until resolution.
@@ -286,7 +351,9 @@ func runWelcomeLoop(
 			return WelcomeResult{}, fmt.Errorf("adt: %w", err)
 		}
 		running, _ := GetADTRunningProcesses(ctx, opts.CloseProcesses)
-		if len(running) == 0 && !state.Allowed {
+		if len(running) == 0 && (!state.Allowed || opts.AllowDeferCloseProcesses) {
+			// All apps are closed: proceed. With AllowDeferCloseProcesses the
+			// closure alone resolves the prompt even while deferral remains.
 			return WelcomeResult{Action: dlgButtonContinue}, nil
 		}
 		payload := buildCloseAppsPayload(s, opts, running, state)
@@ -296,12 +363,24 @@ func runWelcomeLoop(
 		}
 		switch res.Button {
 		case dlgButtonDefer:
-			persistDeferral(s, state)
+			persistDeferral(s, state, opts.DeferRunInterval)
 			logToSession("User deferred the installation.", LogSeverityInfo, "ShowADTInstallationWelcome")
+			fireOnDefer(ctx, s)
 			return WelcomeResult{Action: dlgButtonDefer, Deferred: true},
 				fmt.Errorf("adt: welcome deferred: %w", ErrDeferred)
 		case dlgButtonClose, dlgButtonContinue, dlgButtonTimeout:
+			if res.Button == dlgButtonTimeout {
+				// A timed-out prompt also anchors the run interval (PSADT
+				// updates DeferRunIntervalLastTime on timeout).
+				persistRunInterval(s, opts.DeferRunInterval)
+			}
 			running, _ = GetADTRunningProcesses(ctx, opts.CloseProcesses)
+			if len(running) > 0 {
+				if opts.PromptToSave {
+					gracefulCloseProcesses(ctx, s, srv, running)
+					running, _ = GetADTRunningProcesses(ctx, opts.CloseProcesses)
+				}
+			}
 			if len(running) > 0 {
 				logToSession("Closing running applications to continue.", LogSeverityInfo, "ShowADTInstallationWelcome")
 				terminateProcesses(running)
@@ -313,6 +392,34 @@ func runWelcomeLoop(
 		default:
 			return WelcomeResult{Action: res.Button}, nil
 		}
+	}
+}
+
+// gracefulCloseProcesses asks the dialog client to close the running apps'
+// windows via WM_CLOSE (so they can prompt to save), waiting the configured
+// UI.PromptToSaveTimeout. Failures degrade to the force-terminate path.
+func gracefulCloseProcesses(
+	ctx context.Context,
+	s *DeploymentSession,
+	srv *dialogserver.DialogServer,
+	running []RunningProcess,
+) {
+	names := make([]string, len(running))
+	for i, p := range running {
+		names[i] = p.Name
+	}
+	logToSession("Prompting the running applications to close and save their work.",
+		LogSeverityInfo, "ShowADTInstallationWelcome")
+	res, err := srv.PromptToCloseApps(ctx, ipc.PromptToCloseAppsPayload{
+		ProcessNames:   names,
+		TimeoutSeconds: s.Config().UI.PromptToSaveTimeout,
+	})
+	switch {
+	case err != nil:
+		logToSession("Graceful close failed: "+err.Error(), LogSeverityWarning, "ShowADTInstallationWelcome")
+	case !res.AllClosed:
+		logToSession("Not all application windows closed within the PromptToSaveTimeout.",
+			LogSeverityWarning, "ShowADTInstallationWelcome")
 	}
 }
 
@@ -333,8 +440,16 @@ func waitForProcessExit(ctx context.Context, procs []ProcessObject) {
 	}
 }
 
-// persistDeferral writes the decremented deferral history after a defer.
-func persistDeferral(s *DeploymentSession, state deferralState) {
+// fireOnDefer invokes the session's OnDefer hooks (PSADT OnDefer callback).
+func fireOnDefer(ctx context.Context, s *DeploymentSession) {
+	for _, h := range sessionHooks(s).OnDefer {
+		h(ctx, s)
+	}
+}
+
+// persistDeferral writes the decremented deferral history after a defer,
+// anchoring the run interval when one is configured.
+func persistDeferral(s *DeploymentSession, state deferralState, runInterval time.Duration) {
 	h, _ := s.DeferHistory()
 	if state.Remaining > 0 {
 		next := uint32(state.Remaining - 1) //#nosec G115 -- Remaining is a small non-negative count
@@ -344,6 +459,26 @@ func persistDeferral(s *DeploymentSession, state deferralState) {
 		d := state.Deadline
 		h.Deadline = &d
 	}
+	if runInterval > 0 {
+		now := time.Now()
+		h.RunInterval = &runInterval
+		h.RunIntervalLastTime = &now
+	}
+	if err := s.SetDeferHistory(h); err != nil {
+		logToSession("Failed to persist deferral history: "+err.Error(), LogSeverityWarning, "ShowADTInstallationWelcome")
+	}
+}
+
+// persistRunInterval anchors only the run-interval timestamp (used when a
+// prompt times out without an explicit defer).
+func persistRunInterval(s *DeploymentSession, runInterval time.Duration) {
+	if runInterval <= 0 {
+		return
+	}
+	h, _ := s.DeferHistory()
+	now := time.Now()
+	h.RunInterval = &runInterval
+	h.RunIntervalLastTime = &now
 	if err := s.SetDeferHistory(h); err != nil {
 		logToSession("Failed to persist deferral history: "+err.Error(), LogSeverityWarning, "ShowADTInstallationWelcome")
 	}
@@ -382,21 +517,31 @@ func buildCloseAppsPayload(
 	deferText := tryString(s, prefix+".ButtonRightText")
 
 	co := &ipc.CloseAppsOptions{
-		Message:            message,
-		Apps:               apps,
-		AllowDefer:         state.Allowed,
-		DeferralsRemaining: state.Remaining,
-		ButtonContinueText: continueText,
-		ButtonDeferText:    deferText,
-		ButtonCloseText:    closeText,
-		CountdownSeconds:   welcomeCountdown(opts, state),
+		Message:                  message,
+		Apps:                     apps,
+		AllowDefer:               state.Allowed,
+		DeferralsRemaining:       state.Remaining,
+		ButtonContinueText:       continueText,
+		ButtonDeferText:          deferText,
+		ButtonCloseText:          closeText,
+		CountdownSeconds:         welcomeCountdown(opts, state),
+		ForcedCountdown:          forcedWelcomeCountdown(opts, state),
+		ContinueOnProcessClosure: opts.AllowDeferCloseProcesses,
+	}
+	switch {
+	case opts.CustomMessageText != "":
+		co.CustomMessage = opts.CustomMessageText
+	case opts.CustomText:
+		co.CustomMessage = tryString(s, prefix+".CustomMessage")
 	}
 	if state.HasDeadline {
 		co.DeferralDeadline = state.Deadline.Format("2006-01-02 15:04")
 	}
+	base := baseOptions(s, subtitlePath, defaultDialogTimeout(s))
+	base.NotTopMost = opts.NotTopMost
 	return ipc.ModalDialogPayload{
 		DialogType: ipc.DialogCloseApps,
-		Base:       baseOptions(s, subtitlePath, defaultDialogTimeout(s)),
+		Base:       base,
 		CloseApps:  co,
 	}
 }
@@ -409,15 +554,29 @@ func closeAppsContinueKey(prefix string, noProcesses bool) string {
 	return prefix + ".ButtonLeftText"
 }
 
-// welcomeCountdown resolves the auto-continue countdown seconds.
+// welcomeCountdown resolves the auto-continue countdown seconds: forced
+// close-countdown first, then ForceCountdown (even during deferral), then the
+// plain countdown once deferral is exhausted.
 func welcomeCountdown(opts ShowADTInstallationWelcomeOptions, state deferralState) int {
 	if opts.ForceCloseProcessesCountdown > 0 {
 		return opts.ForceCloseProcessesCountdown
+	}
+	if opts.ForceCountdown > 0 {
+		return opts.ForceCountdown
 	}
 	if !state.Allowed && opts.CloseProcessesCountdown > 0 {
 		return opts.CloseProcessesCountdown
 	}
 	return 0
+}
+
+// forcedWelcomeCountdown reports whether the countdown is a forced
+// auto-continue one (runs even while deferral is on offer).
+func forcedWelcomeCountdown(opts ShowADTInstallationWelcomeOptions, state deferralState) bool {
+	if opts.ForceCloseProcessesCountdown > 0 {
+		return true
+	}
+	return opts.ForceCountdown > 0 && state.Allowed
 }
 
 // tryString resolves a string-table entry, returning "" when it is absent
