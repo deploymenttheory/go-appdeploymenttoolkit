@@ -64,6 +64,9 @@ func runPackage(ctx context.Context, dir, deploymentType, deployMode string, sup
 			ScriptDirectory:   dir,
 			ConfigOverlayPath: optionalPath(filepath.Join(dir, "Config", "config.yaml")),
 			StringsOverlayPath: optionalPath(filepath.Join(dir, "Strings", "strings.yaml")),
+			// Zero-config actions are MSI install/uninstall/repair, all of which
+			// need elevation; fail fast with a clear message otherwise.
+			RequireAdmin: true,
 		},
 		Args: buildRunArgs(deploymentType, deployMode, suppressReboot),
 		Install: func(ctx context.Context, s *adt.DeploymentSession) error {

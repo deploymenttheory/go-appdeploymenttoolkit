@@ -110,6 +110,9 @@ func main() {
 			AppName:    "{{AppName}}",
 			AppVersion: "1.0.0",
 			AppArch:    "x64",
+			// Machine-wide MSI installs require elevation; this fails fast with
+			// a clear message when run without admin rights.
+			RequireAdmin: true,
 		},
 
 		PreInstall: func(ctx context.Context, s *adt.DeploymentSession) error {

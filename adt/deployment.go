@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/session"
 )
@@ -55,6 +56,19 @@ func (d *Deployment) Run(ctx context.Context) {
 
 func (d *Deployment) run(ctx context.Context) int {
 	opts := d.Session
+	// A compiled deployment binary sits at its package root beside Files/ and
+	// SupportFiles/. When the author leaves ScriptDirectory unset, default it
+	// to the executable's directory so relative installer paths resolve (the
+	// session only derives DirFiles/DirSupportFiles from a non-empty
+	// ScriptDirectory). The CLI runner sets ScriptDirectory explicitly, so this
+	// only affects standalone deployments.
+	if opts.ScriptDirectory == "" {
+		if exe, err := os.Executable(); err == nil {
+			opts.ScriptDirectory = filepath.Dir(exe)
+		} else {
+			opts.ScriptDirectory = "."
+		}
+	}
 	if err := d.parseFlags(&opts); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return ExitCodeRunnerFailure
