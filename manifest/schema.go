@@ -6,15 +6,28 @@ import (
 )
 
 // SchemaVersion is the semantic version of the generated JSON Schema
-// artifact (independent of the manifest apiVersion, which gates wire
-// compatibility; the schema version tracks the artifact itself).
+// artifacts. The manifest apiVersion ("v" + SchemaVersion) and every
+// per-platform schema artifact share this one constant.
 const SchemaVersion = "0.1.0-alpha"
 
-// SchemaFileName is the conventional file name of the schema artifact.
+// SchemaFileName is the file name of the Windows schema artifact.
 const SchemaFileName = "winadt.schema-v" + SchemaVersion + ".json"
 
-// SchemaID is the canonical identifier of the generated JSON Schema.
-const SchemaID = "https://github.com/deploymenttheory/go-appdeploymenttoolkit/manifest/" + SchemaFileName
+// SchemaFileNameFor returns the per-platform schema artifact file name
+// (winadt.schema-v<semver>.json / macadt.schema-v<semver>.json).
+func SchemaFileNameFor(target Platform) string {
+	prefix := "winadt"
+	if target == PlatformDarwin {
+		prefix = "macadt"
+	}
+	return prefix + ".schema-v" + SchemaVersion + ".json"
+}
+
+// schemaIDBase is the canonical identifier prefix of the generated schemas.
+const schemaIDBase = "https://github.com/deploymenttheory/go-appdeploymenttoolkit/manifest/"
+
+// SchemaID is the canonical identifier of the Windows JSON Schema.
+const SchemaID = schemaIDBase + SchemaFileName
 
 // JSONSchema renders the manifest format as a JSON Schema (draft 2020-12)
 // generated from the live step registry and session table, so the recorded
@@ -32,11 +45,19 @@ const SchemaID = "https://github.com/deploymenttheory/go-appdeploymenttoolkit/ma
 //	# yaml-language-server: $schema=./winadt.schema-v0.1.0-alpha.json
 //
 // (emit the file beside a package with `adt schema > <SchemaFileName>`).
-func JSONSchema() ([]byte, error) {
+//
+// The target platform selects the step subset: only steps whose Platforms
+// include target appear in the schema. A target with no registered steps is
+// an error.
+func JSONSchema(target Platform) ([]byte, error) {
+	steps := stepsFor(target)
+	if len(steps) == 0 {
+		return nil, fmt.Errorf("manifest: no steps registered for target %q", target)
+	}
 	schema := map[string]any{
 		"$schema":     "https://json-schema.org/draft/2020-12/schema",
-		"$id":         SchemaID,
-		"title":       "adt deployment manifest (" + APIVersion + ")",
+		"$id":         schemaIDBase + SchemaFileNameFor(target),
+		"title":       "adt deployment manifest (" + APIVersion + ", " + string(target) + ")",
 		"description": "A go-appdeploymenttoolkit deployment: session metadata plus nine phase slots composed of steps from the adt step catalog. Structural schema only — `adt validate` additionally applies cross-field semantic rules, package-file existence checks and platform gating.",
 		"type":        "object",
 		"additionalProperties": false,
@@ -54,7 +75,7 @@ func JSONSchema() ([]byte, error) {
 			"phases":  phasesSchema(),
 		},
 		"$defs": map[string]any{
-			"step":        stepEnvelopeSchema(),
+			"step":        stepEnvelopeSchema(steps),
 			"processList": processListSchema(),
 			"duration": map[string]any{
 				"type":        "string",
@@ -109,10 +130,20 @@ func phasesSchema() map[string]any {
 	}
 }
 
+// stepsFor returns the catalog subset supporting the target platform.
+func stepsFor(target Platform) []StepSpec {
+	var out []StepSpec
+	for _, s := range Steps() {
+		if s.SupportsPlatform(target) {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
 // stepEnvelopeSchema renders the step envelope plus a per-step conditional
 // binding `uses` to its `with` parameter schema.
-func stepEnvelopeSchema() map[string]any {
-	steps := Steps()
+func stepEnvelopeSchema(steps []StepSpec) map[string]any {
 	usesEnum := make([]any, len(steps))
 	conditions := make([]any, 0, len(steps))
 	for i, spec := range steps {

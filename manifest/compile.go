@@ -7,8 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/adt"
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/session"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/deploy"
 )
 
 // CompileOptions configures manifest compilation.
@@ -18,11 +17,11 @@ type CompileOptions struct {
 	PackageDir string
 }
 
-// Compile materializes a loaded, validated manifest into an adt.Deployment:
+// Compile materializes a loaded, validated manifest into an winadt.Deployment:
 // the session block becomes SessionOptions and each phase's steps are bound
 // and chained into a PhaseFunc that logs step progress and honors
 // continueOnError. Compile refuses manifests with error-severity issues.
-func Compile(m *Manifest, opts CompileOptions) (*adt.Deployment, error) {
+func Compile(m *Manifest, opts CompileOptions) (*deploy.Deployment, error) {
 	packageDir := opts.PackageDir
 	if packageDir == "" {
 		packageDir = filepath.Dir(m.Path)
@@ -31,7 +30,7 @@ func Compile(m *Manifest, opts CompileOptions) (*adt.Deployment, error) {
 		return nil, fmt.Errorf("manifest: %s has validation errors; run `adt validate` for details", m.Path)
 	}
 
-	dep := &adt.Deployment{Session: sessionOptionsFromParams(m.Session, packageDir)}
+	dep := &deploy.Deployment{Session: sessionOptionsFromParams(m.Session, packageDir)}
 	for _, phase := range m.Phases {
 		if len(phase.Steps) == 0 {
 			continue
@@ -66,7 +65,7 @@ func Compile(m *Manifest, opts CompileOptions) (*adt.Deployment, error) {
 
 // LoadAndCompile is the CLI's one-call path: Load, Validate (refusing
 // errors), Compile.
-func LoadAndCompile(path string, opts CompileOptions) (*adt.Deployment, []Issue, error) {
+func LoadAndCompile(path string, opts CompileOptions) (*deploy.Deployment, []Issue, error) {
 	m, issues, err := Load(path)
 	if err != nil {
 		return nil, nil, err
@@ -84,12 +83,12 @@ func LoadAndCompile(path string, opts CompileOptions) (*adt.Deployment, []Issue,
 }
 
 // compilePhase binds the phase's steps and chains them into one PhaseFunc.
-func compilePhase(phase Phase, packageDir string) (adt.PhaseFunc, error) {
+func compilePhase(phase Phase, packageDir string) (deploy.PhaseFunc, error) {
 	type boundStep struct {
 		label           string
 		uses            string
 		continueOnError bool
-		run             adt.PhaseFunc
+		run             deploy.PhaseFunc
 	}
 	bound := make([]boundStep, 0, len(phase.Steps))
 	for i, step := range phase.Steps {
@@ -113,17 +112,17 @@ func compilePhase(phase Phase, packageDir string) (adt.PhaseFunc, error) {
 			run:             fn,
 		})
 	}
-	return func(ctx context.Context, s *adt.DeploymentSession) error {
+	return func(ctx context.Context, s *deploy.Session) error {
 		for i, b := range bound {
 			s.WriteLog(
 				fmt.Sprintf("Running step [%d/%d] [%s] (%s).", i+1, len(bound), b.label, b.uses),
-				adt.LogSeverityInfo, "manifest", "",
+				deploy.LogSeverityInfo, "manifest", "",
 			)
 			if err := b.run(ctx, s); err != nil {
 				if b.continueOnError {
 					s.WriteLog(
 						fmt.Sprintf("Step [%s] failed but continueOnError is set: %v", b.label, err),
-						adt.LogSeverityWarning, "manifest", "",
+						deploy.LogSeverityWarning, "manifest", "",
 					)
 					continue
 				}
@@ -174,9 +173,9 @@ func normalizePackagePaths(p Params, spec StepSpec, packageDir string) Params {
 	return p
 }
 
-// sessionOptionsFromParams maps the session block onto adt.SessionOptions.
-func sessionOptionsFromParams(p Params, packageDir string) adt.SessionOptions {
-	opts := adt.SessionOptions{
+// sessionOptionsFromParams maps the session block onto deploy.SessionOptions.
+func sessionOptionsFromParams(p Params, packageDir string) deploy.SessionOptions {
+	opts := deploy.SessionOptions{
 		AppVendor:              p.StringOr("appVendor", ""),
 		AppName:                p.StringOr("appName", ""),
 		AppVersion:             p.StringOr("appVersion", ""),
@@ -202,7 +201,7 @@ func sessionOptionsFromParams(p Params, packageDir string) adt.SessionOptions {
 		StringsOverlayPath: optionalOverlay(packageDir, "Strings", "strings.yaml"),
 	}
 	if mode, ok := p.String("deployMode"); ok {
-		if m, valid := session.ParseDeployMode(mode); valid {
+		if m, valid := deploy.ParseDeployMode(mode); valid {
 			opts.DeployMode = m
 		}
 	}

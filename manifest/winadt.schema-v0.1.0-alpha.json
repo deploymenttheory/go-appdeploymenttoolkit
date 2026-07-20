@@ -3476,6 +3476,6 @@
     "session",
     "phases"
   ],
-  "title": "adt deployment manifest (v0.1.0-alpha)",
+  "title": "adt deployment manifest (v0.1.0-alpha, windows)",
   "type": "object"
 }

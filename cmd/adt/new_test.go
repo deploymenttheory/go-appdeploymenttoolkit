@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/config"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/shared/config"
 )
 
 // TestSampleConfigLoads ensures the scaffolded Config/config.yaml parses
@@ -43,7 +43,7 @@ func TestScaffoldWritesPackage(t *testing.T) {
 	// The generated main.go references the SDK by its adt import.
 	program, err := os.ReadFile(filepath.Join(dir, "main.go"))
 	require.NoError(t, err)
-	assert.Contains(t, string(program), "go-appdeploymenttoolkit/adt")
+	assert.Contains(t, string(program), "go-appdeploymenttoolkit/winadt")
 	assert.Contains(t, string(program), "Demo App")
 	// The scaffold defaults to requiring admin so a non-elevated run fails fast.
 	assert.Contains(t, string(program), "RequireAdmin: true")

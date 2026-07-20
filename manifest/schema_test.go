@@ -3,6 +3,7 @@ package manifest
 import (
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,7 +18,7 @@ const schemaFile = SchemaFileName
 //
 //	ADT_UPDATE_SCHEMA=1 go test ./manifest -run TestSchemaFileCurrent
 func TestSchemaFileCurrent(t *testing.T) {
-	generated, err := JSONSchema()
+	generated, err := JSONSchema(PlatformWindows)
 	require.NoError(t, err)
 	generated = append(generated, '\n')
 
@@ -42,7 +43,7 @@ func normalizeEOL(b []byte) []byte {
 }
 
 func TestSchemaStructure(t *testing.T) {
-	blob, err := JSONSchema()
+	blob, err := JSONSchema(PlatformWindows)
 	require.NoError(t, err)
 	var schema map[string]any
 	require.NoError(t, json.Unmarshal(blob, &schema))
@@ -81,4 +82,20 @@ func TestSchemaStructure(t *testing.T) {
 		return
 	}
 	t.Fatal("msi.install condition not found in schema")
+}
+
+func TestSchemaDarwinTargetErrorsWithoutSteps(t *testing.T) {
+	// The compile_test helpers register darwin-tagged test steps in this test
+	// binary, so filter them out of the expectation: the check is that the
+	// PRODUCTION catalog has no darwin steps yet.
+	prodDarwin := 0
+	for _, s := range Steps() {
+		if s.SupportsPlatform(PlatformDarwin) && !strings.HasPrefix(s.Name, "test.") {
+			prodDarwin++
+		}
+	}
+	if prodDarwin == 0 && len(stepsFor(PlatformDarwin)) == 0 {
+		_, err := JSONSchema(PlatformDarwin)
+		assert.Error(t, err, "darwin schema must error until mac steps exist")
+	}
 }

@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/adt"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/winadt"
 	"github.com/deploymenttheory/go-appdeploymenttoolkit/manifest"
 )
 
@@ -74,7 +74,7 @@ func runPackage(ctx context.Context, dir, deploymentType, deployMode string, sup
 			return err
 		}
 		defer func() {
-			_ = adt.DismountADTWimFile(ctx, adt.DismountADTWimFileOptions{Path: wimMount})
+			_ = winadt.DismountADTWimFile(ctx, winadt.DismountADTWimFileOptions{Path: wimMount})
 		}()
 	}
 	transforms := discoverTransforms(msi)
@@ -89,18 +89,18 @@ func runPackage(ctx context.Context, dir, deploymentType, deployMode string, sup
 	// PSADT's Zero-Config discovery (opt out with
 	// --no-default-msi-process-list). Best-effort: discovery failures leave
 	// the list empty.
-	var processesToClose []adt.ProcessObject
+	var processesToClose []winadt.ProcessObject
 	if !detection.noMsiProcessList {
-		if procs, err := adt.GetADTMsiExeProcessList(ctx, msi, transforms); err == nil {
+		if procs, err := winadt.GetADTMsiExeProcessList(ctx, msi, transforms); err == nil {
 			processesToClose = procs
 		}
 	}
 
-	msiOpts := func(action string) adt.StartADTMsiProcessOptions {
-		return adt.StartADTMsiProcessOptions{Action: action, Path: msi, Transforms: transforms}
+	msiOpts := func(action string) winadt.StartADTMsiProcessOptions {
+		return winadt.StartADTMsiProcessOptions{Action: action, Path: msi, Transforms: transforms}
 	}
-	dep := &adt.Deployment{
-		Session: adt.SessionOptions{
+	dep := &winadt.Deployment{
+		Session: winadt.SessionOptions{
 			AppVendor:           product.vendor,
 			AppName:             product.name,
 			AppVersion:          product.version,
@@ -118,13 +118,13 @@ func runPackage(ctx context.Context, dir, deploymentType, deployMode string, sup
 			ProcessInteractivityDetection: detection.interactivity,
 		},
 		Args: buildRunArgs(deploymentType, deployMode, suppressReboot),
-		Install: func(ctx context.Context, s *adt.DeploymentSession) error {
-			if _, err := adt.StartADTMsiProcess(ctx, msiOpts("Install")); err != nil {
+		Install: func(ctx context.Context, s *winadt.DeploymentSession) error {
+			if _, err := winadt.StartADTMsiProcess(ctx, msiOpts("Install")); err != nil {
 				return err
 			}
 			// Patches apply after the base install, alphabetical = order.
 			for _, msp := range patches {
-				if _, err := adt.StartADTMsiProcess(ctx, adt.StartADTMsiProcessOptions{
+				if _, err := winadt.StartADTMsiProcess(ctx, winadt.StartADTMsiProcessOptions{
 					Action: "Patch",
 					Path:   msp,
 				}); err != nil {
@@ -133,12 +133,12 @@ func runPackage(ctx context.Context, dir, deploymentType, deployMode string, sup
 			}
 			return nil
 		},
-		Uninstall: func(ctx context.Context, s *adt.DeploymentSession) error {
-			_, err := adt.StartADTMsiProcess(ctx, msiOpts("Uninstall"))
+		Uninstall: func(ctx context.Context, s *winadt.DeploymentSession) error {
+			_, err := winadt.StartADTMsiProcess(ctx, msiOpts("Uninstall"))
 			return err
 		},
-		Repair: func(ctx context.Context, s *adt.DeploymentSession) error {
-			_, err := adt.StartADTMsiProcess(ctx, msiOpts("Repair"))
+		Repair: func(ctx context.Context, s *winadt.DeploymentSession) error {
+			_, err := winadt.StartADTMsiProcess(ctx, msiOpts("Repair"))
 			return err
 		},
 	}
@@ -161,11 +161,11 @@ func discoverZeroConfigWIM(ctx context.Context, filesDir string) (msi, mount str
 		}
 	}
 	if len(wims) == 0 {
-		return "", "", fmt.Errorf("no MSI or WIM found in %s: %w", filesDir, adt.ErrNotFound)
+		return "", "", fmt.Errorf("no MSI or WIM found in %s: %w", filesDir, winadt.ErrNotFound)
 	}
 	sort.Strings(wims)
 	mount = filepath.Join(filesDir, "wim-mount")
-	if _, err := adt.MountADTWimFile(ctx, adt.MountADTWimFileOptions{
+	if _, err := winadt.MountADTWimFile(ctx, winadt.MountADTWimFileOptions{
 		ImagePath: wims[0],
 		Path:      mount,
 		Index:     1,
@@ -175,7 +175,7 @@ func discoverZeroConfigWIM(ctx context.Context, filesDir string) (msi, mount str
 	}
 	msi, err = discoverZeroConfigMSI(mount)
 	if err != nil {
-		_ = adt.DismountADTWimFile(ctx, adt.DismountADTWimFileOptions{Path: mount})
+		_ = winadt.DismountADTWimFile(ctx, winadt.DismountADTWimFileOptions{Path: mount})
 		return "", "", err
 	}
 	return msi, mount, nil
@@ -267,7 +267,7 @@ func discoverZeroConfigMSI(filesDir string) (string, error) {
 		}
 	}
 	if len(msis) == 0 {
-		return "", fmt.Errorf("no MSI found in %s: %w", filesDir, adt.ErrNotFound)
+		return "", fmt.Errorf("no MSI found in %s: %w", filesDir, winadt.ErrNotFound)
 	}
 	sort.Strings(msis)
 	chosen := msis[0]
@@ -299,7 +299,7 @@ type msiProduct struct {
 // to the file name so the CLI still cross-compiles and self-tests.
 func readMSIProduct(ctx context.Context, msiPath string) (msiProduct, error) {
 	fallback := msiProduct{name: strings.TrimSuffix(filepath.Base(msiPath), filepath.Ext(msiPath)), version: "1.0.0"}
-	props, err := adt.GetADTMsiTableProperty(ctx, adt.GetADTMsiTablePropertyOptions{Path: msiPath})
+	props, err := winadt.GetADTMsiTableProperty(ctx, winadt.GetADTMsiTablePropertyOptions{Path: msiPath})
 	if err != nil {
 		return fallback, nil //nolint:nilerr // metadata is best-effort; name-based fallback is fine
 	}

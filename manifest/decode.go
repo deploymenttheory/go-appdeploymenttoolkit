@@ -8,7 +8,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/adt"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/deploy"
 )
 
 // nodePos extracts a node's source position.
@@ -259,12 +259,12 @@ func asProcessList(n *yaml.Node, path string, issues *[]Issue) (any, bool) {
 			"expected a list of {name, description?} mappings")
 		return nil, false
 	}
-	out := make([]adt.ProcessObject, 0, len(n.Content))
+	out := make([]deploy.ProcessObject, 0, len(n.Content))
 	before := len(*issues)
 	for i, item := range n.Content {
 		entry := walkMapping(resolveAlias(item), fmt.Sprintf("%s[%d]", path, i), processListSpecs, nodePos(item), issues)
 		name, _ := entry.String("name")
-		out = append(out, adt.ProcessObject{
+		out = append(out, deploy.ProcessObject{
 			Name:        name,
 			Description: entry.StringOr("description", ""),
 		})

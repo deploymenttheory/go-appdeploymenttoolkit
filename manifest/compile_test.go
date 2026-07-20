@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/adt"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/deploy"
 )
 
 // testStepCalls records invocations of the test-only steps registered below.
@@ -22,9 +22,9 @@ func init() {
 	register(StepSpec{
 		Name: "test.record", Summary: "test helper", Platforms: []Platform{PlatformWindows, PlatformDarwin},
 		Params: []ParamSpec{{Name: "tag", Type: TypeString, Required: true, Description: "recorded tag"}},
-		Bind: func(p Params) (adt.PhaseFunc, error) {
+		Bind: func(p Params) (deploy.PhaseFunc, error) {
 			tag := p.StringOr("tag", "")
-			return func(ctx context.Context, s *adt.DeploymentSession) error {
+			return func(ctx context.Context, s *deploy.Session) error {
 				testStepCalls = append(testStepCalls, tag)
 				return nil
 			}, nil
@@ -32,8 +32,8 @@ func init() {
 	})
 	register(StepSpec{
 		Name: "test.fail", Summary: "test helper", Platforms: []Platform{PlatformWindows, PlatformDarwin},
-		Bind: func(p Params) (adt.PhaseFunc, error) {
-			return func(ctx context.Context, s *adt.DeploymentSession) error {
+		Bind: func(p Params) (deploy.PhaseFunc, error) {
+			return func(ctx context.Context, s *deploy.Session) error {
 				testStepCalls = append(testStepCalls, "fail")
 				return errors.New("step exploded")
 			}, nil
@@ -109,9 +109,9 @@ phases:
 	require.NoError(t, err)
 	require.NotNil(t, dep.Install)
 
-	s, err := adt.OpenADTSession(context.Background(), dep.Session)
+	s, err := deploy.Open(context.Background(), dep.Session)
 	require.NoError(t, err)
-	defer adt.CloseADTSession(context.Background(), s)
+	defer deploy.Close(context.Background(), s)
 
 	testStepCalls = nil
 	err = dep.Install(context.Background(), s)

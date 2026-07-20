@@ -151,12 +151,12 @@ package main
 import (
 	"context"
 
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/adt"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/winadt"
 )
 
 func main() {
-	(&adt.Deployment{
-		Session: adt.SessionOptions{
+	(&winadt.Deployment{
+		Session: winadt.SessionOptions{
 			AppVendor:  "",
 			AppName:    "{{AppName}}",
 			AppVersion: "1.0.0",
@@ -166,31 +166,31 @@ func main() {
 			RequireAdmin: true,
 		},
 
-		PreInstall: func(ctx context.Context, s *adt.DeploymentSession) error {
-			_, err := adt.ShowADTInstallationWelcome(ctx, adt.ShowADTInstallationWelcomeOptions{
-				CloseProcesses: []adt.ProcessObject{},
+		PreInstall: func(ctx context.Context, s *winadt.DeploymentSession) error {
+			_, err := winadt.ShowADTInstallationWelcome(ctx, winadt.ShowADTInstallationWelcomeOptions{
+				CloseProcesses: []winadt.ProcessObject{},
 				AllowDefer:     true,
 				DeferTimes:     3,
 			})
 			return err
 		},
 
-		Install: func(ctx context.Context, s *adt.DeploymentSession) error {
+		Install: func(ctx context.Context, s *winadt.DeploymentSession) error {
 			// Example: install an MSI dropped under Files/.
-			// _, err := adt.StartADTMsiProcess(ctx, adt.StartADTMsiProcessOptions{
+			// _, err := winadt.StartADTMsiProcess(ctx, winadt.StartADTMsiProcessOptions{
 			//     Action: "Install", Path: "{{AppName}}.msi",
 			// })
-			return adt.WriteADTLogEntry(ctx, adt.LogEntryOptions{
+			return winadt.WriteADTLogEntry(ctx, winadt.LogEntryOptions{
 				Message: []string{"Installing {{AppName}}..."},
 			})
 		},
 
-		PostInstall: func(ctx context.Context, s *adt.DeploymentSession) error {
+		PostInstall: func(ctx context.Context, s *winadt.DeploymentSession) error {
 			return nil
 		},
 
-		Uninstall: func(ctx context.Context, s *adt.DeploymentSession) error {
-			return adt.WriteADTLogEntry(ctx, adt.LogEntryOptions{
+		Uninstall: func(ctx context.Context, s *winadt.DeploymentSession) error {
+			return winadt.WriteADTLogEntry(ctx, winadt.LogEntryOptions{
 				Message: []string{"Uninstalling {{AppName}}..."},
 			})
 		},

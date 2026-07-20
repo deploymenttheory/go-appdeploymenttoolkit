@@ -7,10 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/procmgmt"
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/session"
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/shortcut"
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/svcmgmt"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/deploy"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/win/procmgmt"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/win/shortcut"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/internal/win/svcmgmt"
 )
 
 var stepNameRe = regexp.MustCompile(`^[a-z][a-zA-Z0-9]*(\.[a-zA-Z][a-zA-Z0-9]*)+$`)
@@ -70,7 +70,7 @@ func TestEnumDrift(t *testing.T) {
 		if spec.Name == "deployMode" {
 			found = true
 			for _, v := range spec.Enum {
-				_, ok := session.ParseDeployMode(v)
+				_, ok := deploy.ParseDeployMode(v)
 				assert.True(t, ok, "deployMode %q", v)
 			}
 		}

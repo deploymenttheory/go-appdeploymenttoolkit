@@ -4,7 +4,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/deploymenttheory/go-appdeploymenttoolkit/adt"
+	"github.com/deploymenttheory/go-appdeploymenttoolkit/deploy"
 )
 
 // Platform tags the operating systems a step supports.
@@ -156,8 +156,8 @@ func (p Params) IntList(name string) ([]int, bool) {
 }
 
 // ProcessList returns a process-list parameter.
-func (p Params) ProcessList(name string) ([]adt.ProcessObject, bool) {
-	v, ok := p.values[name].V.([]adt.ProcessObject)
+func (p Params) ProcessList(name string) ([]deploy.ProcessObject, bool) {
+	v, ok := p.values[name].V.([]deploy.ProcessObject)
 	return v, ok
 }
 
@@ -201,7 +201,7 @@ type StepSpec struct {
 	// Bind materializes the step into a phase fragment; Compile chains these
 	// (honoring name/continueOnError) into the Deployment's PhaseFuncs. Bind
 	// must not execute anything.
-	Bind func(p Params) (adt.PhaseFunc, error) `json:"-"`
+	Bind func(p Params) (deploy.PhaseFunc, error) `json:"-"`
 }
 
 // SupportsPlatform reports whether the step is available on the target.
