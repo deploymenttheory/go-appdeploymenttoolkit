@@ -3,7 +3,7 @@ module github.com/deploymenttheory/go-appdeploymenttoolkit
 go 1.25.0
 
 require (
-	github.com/deploymenttheory/go-bindings-win32 v0.2.1
+	github.com/deploymenttheory/go-bindings-win32 v0.3.0
 	github.com/deploymenttheory/go-bindings-wmi v0.1.0
 	github.com/jchv/go-webview2 v0.0.0-20260205173254-56598839c808
 	github.com/spf13/cobra v1.10.2
