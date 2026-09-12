@@ -1,6 +1,6 @@
 module github.com/deploymenttheory/go-appdeploymenttoolkit
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/deploymenttheory/go-bindings-win32 v0.5.0
@@ -8,7 +8,7 @@ require (
 	github.com/jchv/go-webview2 v0.0.0-20260205173254-56598839c808
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
-	golang.org/x/sys v0.47.0
+	golang.org/x/sys v0.48.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
