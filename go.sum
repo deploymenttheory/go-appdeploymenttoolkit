@@ -1,8 +1,8 @@
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
 github.com/deploymenttheory/go-bindings-win32 v0.5.0 h1:B5qu2L+XvQRPe0/ni7Q9PAu3j3it94cyDJjGTeMLG/o=
 github.com/deploymenttheory/go-bindings-win32 v0.5.0/go.mod h1:J3mOfF0N1uFmI8Cm3GPtq1YJYnwAKUkOsmc36GYbm0w=
-github.com/deploymenttheory/go-bindings-wmi v0.1.0 h1:d/MctUZIMcN6E/FXshncJrBTnxxD7ZecMJ4h6B7PpFs=
-github.com/deploymenttheory/go-bindings-wmi v0.1.0/go.mod h1:wknAAK/UpPVXmUivrKf93H0f4FB7KvEzgwIOCv+eb8E=
+github.com/deploymenttheory/go-bindings-wmi v1.0.1 h1:PWP0CuNaUj2bC0Cxijw2vFY7Z5XsLcTwpv7eN/XS09c=
+github.com/deploymenttheory/go-bindings-wmi v1.0.1/go.mod h1:wg79QBZ1pKyc5qyL0irN073v1mgk/AlUnhoI9RuaoVc=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/jchv/go-webview2 v0.0.0-20260205173254-56598839c808 h1:ftnsTqIUH57XQEF+PnXX9++nlHCzdkuB5zbWyMMruZo=
